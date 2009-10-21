@@ -1,0 +1,117 @@
+\documentclass{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{url}
+
+\title{15-740 Project Proposal: Virtual Application Profiler}
+\author{Sven Stork \\ \texttt{svens@cs.cmu.edu}
+	\and Anthony Gitter \\ \texttt{agitter@cs.cmu.edu}}
+
+\begin{document}
+
+\maketitle
+
+\section{Project Description}
+Existing binary instrumentation tools can be useful for analyzing
+code performance and optimal hardware structures for an application,
+but the slowdown from dynamic instrumentation can make the use of such tools
+a tedious process.  In addition, any programmer wishing to create
+custom dynamic analysis must first learn to use an
+instrumentation library such as Pin\footnote{http://www.pintool.org/}.
+
+We propose to implement a extensible framework for rapid prototyping
+and analysis of program behavior on hardware structures.  Our framework
+will first use Pin to instrument code and log a trace of a
+program's execution, including information such as memory accesses,
+memory allocation, function calls, time, and symbol names.
+The trace will be stored in a SQLite\footnote{http://www.sqlite.org/} database.  Based on
+this stored information, the programmer can quickly and easily
+perform different kinds of analysis without re-executing the
+Pin-instrumented code.
+
+One of the main benefits of this approach is that all intermediate
+information is directly accessible via SQL queries, which enables
+programmers to build custom types of high level analysis with ease.
+However, analysis is not limited to what can be expressed as SQL
+queries, as we will use the database to retrieve information for
+more complex use cases.  Equally important is the fact that the 
+instrumented code only needs to be run once, because iteratively
+tweaking parameters and rerunning instrumented code can be a
+very slow process.
+
+Our project web site is \url{http://www.cs.cmu.edu/~agitter/15740/}.
+
+\section{Goals}
+Our framework is iterative by nature, meaning we will first
+provide simple, core functionality and incrementally
+add richer features.
+
+\subsection*{75\% goal}
+At a minimum, we will implement the basic data-collection
+functionality as a Pin tool and store the gathered information in a SQLite database.
+We will provide basic memory profiling information and replay
+features.
+
+\subsection*{100\% goal}
+In addition to the functionality described in the 75\% goal,
+we will provide more sophisticated performance analysis,
+demonstrate such analysis can be built upon SQL queries,
+and compare the performance of our approach with that of a
+pure Pin-based tool such as a cache simulator.
+
+\subsection*{125\%+ goal}
+If the project proceeds much more quickly than planned,
+we will continue to extend the richness of the trace until
+the replay is essentially indistinguishable from the original
+program execution.  At this point we could provide very
+advanced analysis such as lock set verification, false
+sharing statistics, and the effects of huge page tables.
+
+\section{Schedule}
+We propose the following schedule:
+
+\begin{description}
+	\item[Week 1] Review related literature.  Set up repositories
+		and development environment.
+	\item[Week 2] First design phase of the software architecture
+		and database schema.
+	\item[Week 3] Initial implementation of the Pin tool.
+	\item[Week 4] Completion of the first prototype.  Begin work
+		on the data analysis.
+	\item[Week 5] Either iterate and implement more advanced
+		logging and analysis or fix shortcomings in the current design/prototype.
+	\item[Week 6] Evaluation of our tool and writeup.  Create the
+		poster.
+\end{description}
+
+Once we determine what types of information will be logged, the Pin
+tool implementation can proceed in parallel with the SQLite database
+design and the development of the analysis features.  This will allow
+us to divide much of the work for weeks 2 through 5.  The completion
+of the Pin tool is on the critical path for the majority of the project
+because all downstream analysis depends on it.
+
+\section{Milestone}
+We expect to be able to achieve our previously described 75\%
+goal by November 17.
+
+\section{Getting Started}
+Our project was designed so that we can begin work
+quickly.  We require no special hardware or external resources.
+Furthermore, both Pin and SQLite are freely available online,
+and we already have limited experience with Pin from the
+first homework assignment.
+
+There are a number of existing tools for memory profiling,
+the analysis of hardware effects on program performance, and
+examination of program behavior.  Some, such as MemSpy \cite{memspy}
+are entirely instrumentation-based tools, while others like SIGMA \cite{sigma}
+log a trace for subsequent analysis in a manner similar to
+our proposed framework.  We have
+only begun to explore the set of related work and a literature
+search will be the first major step of our project.
+
+\bibliographystyle{plain}
+\bibliography{proposal}
+
+\end{document}
