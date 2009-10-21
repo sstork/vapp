@@ -36,5 +36,8 @@ void db_init(std::string name);
 // This function must be called before the application terminates 
 void db_finalize();
 
+void db_add_image(int id, std::string name);
+
+void db_add_method(std::string name, int image_id, unsigned long int start, unsigned long int end);
 
 #endif // DATABASE_H
