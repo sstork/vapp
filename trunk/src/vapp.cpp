@@ -87,7 +87,6 @@ void VAPPInstrumentInstruction(INS ins, VOID *v)
 
 }
 
-
 // This function is called when the application exits
 void VAPPFini(INT32 code, VOID *v)
 {
@@ -107,6 +106,9 @@ int main(int argc, char *argv[])
 
     // Initialize database
     db_init(KnobOutputFile.Value());
+    
+    // Register Routine to be called to instrument rtn
+    RTN_AddInstrumentFunction(VAPPRoutine, 0);
     
     // Register scs_nstruction to be called to instrument instructions
     INS_AddInstrumentFunction(VAPPInstrumentInstruction, NULL);

@@ -29,8 +29,22 @@
 
 #include <sqlite3.h>
 
+#include <sstream>
+#include <iostream>
+
+using namespace std;
 
 static sqlite3 *db = NULL;
+
+
+static void db_exec(string cmd)
+{
+    if ( sqlite3_exec(db, cmd.c_str(), NULL, NULL, NULL) != SQLITE_OK ) {
+            fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
+            sqlite3_close(db);
+            exit(1);
+    }
+}
 
 
 void db_init(std::string name)
@@ -45,6 +59,14 @@ void db_init(std::string name)
             exit(1);
         }
     }
+
+    db_exec("PRAGMA synchronous=OFF");
+
+    // create image tables
+    db_exec("CREATE TABLE Images (Id int, ImgName varchar(64))");
+
+    // create image tables
+    db_exec("CREATE TABLE Methods (MethName varchar(64), ImgId int, MethStart big int , MethEnd big int)");
 }
 
 
@@ -54,4 +76,23 @@ void db_finalize()
         sqlite3_close(db);
         db = NULL;
     }
+}
+
+
+
+void db_add_image(int id, string name)
+{
+    stringstream ss;
+    ss << "INSERT INTO Images VALUES(";
+    ss << id << ",\"" << name << "\")";
+    db_exec(ss.str());
+}
+
+void db_add_method(std::string name , int image_id, unsigned long int start, unsigned long int end)
+{
+    stringstream ss;
+    ss << "INSERT INTO Methods VALUES(";
+    ss << "\"" << name << "\"," ;
+    ss << image_id << "," << start << "," << end << ")";
+    db_exec(ss.str());
 }
