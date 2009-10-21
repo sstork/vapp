@@ -26,12 +26,10 @@
  * OF SUCH DAMAGE.
  */
 
-
-
 #include "pin.H"
 
 #include "callbacks.h"
-
+#include "database.h"
 
 #include <fstream>
 #include <iostream>
@@ -40,16 +38,7 @@
 /*
  * Name of the output file
  */
-KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE,         "pintool", "param_output",        "scs.log", "output file");
-KNOB<int>    KnobCacheSize(KNOB_MODE_WRITEONCE,          "pintool", "param_cache_size",    "128",     "cache size in KB");
-KNOB<int>    KnobLineSize(KNOB_MODE_WRITEONCE,           "pintool", "param_line_size",     "64",      "line size");
-KNOB<int>    KnobCacheMissLatency(KNOB_MODE_WRITEONCE,   "pintool", "param_miss_penalty",  "100",     "cache miss latency");
-KNOB<int>    KnobMemoryRepeatRate(KNOB_MODE_WRITEONCE,   "pintool", "param_repeat_rate",   "20",      "memory repeat rate");
-KNOB<int>    KnobCacheAssociativity(KNOB_MODE_WRITEONCE, "pintool", "param_associativity", "1",       "cache associativity");
-KNOB<int>    KnobCachePrefetch(KNOB_MODE_WRITEONCE,      "pintool", "param_k",             "3",       "amount of cache lines to prefetch");
-KNOB<int>    KnobPrefetchMode(KNOB_MODE_WRITEONCE,       "pintool", "param_prefetch_mode", "0",       "prefetch mode");
-
-
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE,         "pintool", "output",        "data", "output file");
 
 
 // Pin calls this function every time a new instruction is encountered
@@ -102,7 +91,8 @@ void VAPPInstrumentInstruction(INS ins, VOID *v)
 // This function is called when the application exits
 void VAPPFini(INT32 code, VOID *v)
 {
-    // TODO
+    // Shutdown database
+    db_finalize();
 }
 
 
@@ -114,6 +104,9 @@ int main(int argc, char *argv[])
 
     // Initialize symbols
     PIN_InitSymbols();
+
+    // Initialize database
+    db_init(KnobOutputFile.Value());
     
     // Register scs_nstruction to be called to instrument instructions
     INS_AddInstrumentFunction(VAPPInstrumentInstruction, NULL);
