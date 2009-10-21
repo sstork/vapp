@@ -40,10 +40,10 @@ endif
 #
 ##############################################################
 
-EXTRA_LIBS =
+EXTRA_LIBS = -lsqlite3
 
 TOOL_ROOTS = vapp
-EXTRA_OBJS= $(OBJDIR)callbacks.o #$(OBJDIR)Part.o $(OBJDIR)Cache.o $(OBJDIR)AssociativeCache.o  $(OBJDIR)Profiler.o  $(OBJDIR)Global.o $(OBJDIR)InfinitePrefetchAssociativeCache.o $(OBJDIR)FinitePrefetchAssociativeCache.o
+EXTRA_OBJS= $(OBJDIR)callbacks.o $(OBJDIR)database.o 
 
 all: tools
 SANITY_TOOLS = 
