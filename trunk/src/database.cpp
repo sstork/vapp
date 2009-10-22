@@ -95,12 +95,26 @@ void db_init(std::string name)
     // create image tables
     db_exec_direct("CREATE TABLE Accesses (VCLK big int, MemAddress big int, InstrAddress big int, Write tiny int)");
 
+    // create Malloc tables
+    db_exec_direct("CREATE TABLE Mallocs (VCLK big int, Size int, Address big int)");
+
+    // create Free tables
+    db_exec_direct("CREATE TABLE Frees (VCLK big int, Address big int)");
+
 }
 
 
 void db_finalize()
 {
     if ( db != NULL ) {
+        if ( db_buf.size() > 0 ) {
+            db_exec_direct("BEGIN;");
+            for ( list<string>::iterator it = db_buf.begin() ; it != db_buf.end(); it++) {
+                db_exec_direct(*it);
+            }
+            db_exec_direct("END;");
+            db_buf.clear();
+        }
         sqlite3_close(db);
         db = NULL;
     }
@@ -137,5 +151,20 @@ void db_add_mem_access(unsigned long int vclk, unsigned long int MemAddr, unsign
 {
     stringstream ss;
     ss << "INSERT INTO Accesses VALUES(" << vclk << "," << MemAddr << "," << InstrAddr << "," << (int)Write << ")";
+    db_exec(ss.str());
+}
+
+
+void db_add_malloc(unsigned long int vclk, int size, unsigned long int address)
+{
+    stringstream ss;
+    ss << "INSERT INTO Mallocs VALUES(" << vclk << "," << size << "," << address << ")";
+    db_exec(ss.str());
+}
+
+void db_add_free(unsigned long int vclk, unsigned long int address)
+{
+    stringstream ss;
+    ss << "INSERT INTO Frees VALUES(" << vclk << "," << address << ")";
     db_exec(ss.str());
 }

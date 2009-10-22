@@ -44,5 +44,9 @@ void db_add_method_call(unsigned long int vclk, unsigned long int start, char en
 
 void db_add_mem_access(unsigned long int vclk, unsigned long int MemAddr, unsigned long int InstrAddr, char Write);
 
+void db_add_malloc(unsigned long int vclk, int size, unsigned long int address);
+
+void db_add_free(unsigned long int vclk, unsigned long int address);
+
 
 #endif // DATABASE_H
