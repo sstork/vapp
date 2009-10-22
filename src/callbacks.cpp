@@ -94,7 +94,6 @@ void VAPPRoutineLeave(RTN rtn)
 
 void VAPPMalloc(RTN rtn, ADDRINT size, ADDRINT *buf)
 {
-    cout << "malloc" << endl;
     if ( VAPPTracing & VAPP_ALLOC_FREE ) {
         db_add_malloc(VCLOCK, size, (unsigned long int)buf);
     }
@@ -111,14 +110,12 @@ void VAPPFree(RTN rtn, ADDRINT *buf)
 void VAPPControlTraceOn(RTN rtn, ADDRINT param0)
 {
     VAPPTracing = (vapp_flags_t)(VAPPTracing | param0);
-    cout << "VAPPTracing = " << hex << VAPPTracing << endl;
 }
 
 
 void VAPPControlTraceOff(RTN rtn, ADDRINT param0)
 {
     VAPPTracing = (vapp_flags_t)(VAPPTracing & (~(param0)));
-    cout << "VAPPTracing = " << hex << VAPPTracing << endl;
 }
 
 

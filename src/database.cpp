@@ -52,7 +52,7 @@ static void db_exec_direct(string cmd)
 }
 
 
-static void db_exec(string cmd)
+static inline void db_exec(string cmd)
 {
     db_buf.push_back(cmd);
 
@@ -93,7 +93,7 @@ void db_init(std::string name)
     db_exec_direct("CREATE TABLE Calls (VCLK big int, Method big int, Enter tiny int)");
 
     // create image tables
-    db_exec_direct("CREATE TABLE Accesses (VCLK big int, MemAddress big int, InstrAddress big int, Write tiny int)");
+    db_exec_direct("CREATE TABLE MemoryAccesses (VCLK big int, MemAddress big int, InstrAddress big int, Write tiny int)");
 
     // create Malloc tables
     db_exec_direct("CREATE TABLE Mallocs (VCLK big int, Size int, Address big int)");
@@ -150,7 +150,7 @@ void db_add_method_call(unsigned long int vclk, unsigned long int start, char en
 void db_add_mem_access(unsigned long int vclk, unsigned long int MemAddr, unsigned long int InstrAddr, char Write)
 {
     stringstream ss;
-    ss << "INSERT INTO Accesses VALUES(" << vclk << "," << MemAddr << "," << InstrAddr << "," << (int)Write << ")";
+    ss << "INSERT INTO MemoryAccesses VALUES(" << vclk << "," << MemAddr << "," << InstrAddr << "," << (int)Write << ")";
     db_exec(ss.str());
 }
 
