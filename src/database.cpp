@@ -27,22 +27,42 @@
  */
 #include "database.h"
 
+#include <stdlib.h>
 #include <sqlite3.h>
 
 #include <sstream>
 #include <iostream>
+#include <list>
 
 using namespace std;
 
 static sqlite3 *db = NULL;
+static list<string> db_buf;
+
+
+
+
+static void db_exec_direct(string cmd)
+{
+    if ( sqlite3_exec(db, cmd.c_str(), NULL, NULL, NULL) != SQLITE_OK ) {
+        fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
+        sqlite3_close(db);
+        exit(1);
+    }
+}
 
 
 static void db_exec(string cmd)
 {
-    if ( sqlite3_exec(db, cmd.c_str(), NULL, NULL, NULL) != SQLITE_OK ) {
-            fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
-            sqlite3_close(db);
-            exit(1);
+    db_buf.push_back(cmd);
+
+    if ( db_buf.size() >= 20000 ) {
+        db_exec_direct("BEGIN;");
+        for ( list<string>::iterator it = db_buf.begin() ; it != db_buf.end(); it++) {
+            db_exec_direct(*it);
+        }
+        db_exec_direct("END;");
+        db_buf.clear();
     }
 }
 
@@ -60,13 +80,21 @@ void db_init(std::string name)
         }
     }
 
-    db_exec("PRAGMA synchronous=OFF");
+    db_exec_direct("PRAGMA synchronous=OFF");
+    db_exec_direct("PRAGMA cache_size=50000");
 
     // create image tables
-    db_exec("CREATE TABLE Images (Id int, ImgName varchar(64))");
+    db_exec_direct("CREATE TABLE Images (Id int, ImgName varchar(64))");
+
+    // create methods tables
+    db_exec_direct("CREATE TABLE Methods (MethName varchar(64), ImgId int, MethStart big int , MethEnd big int)");
 
     // create image tables
-    db_exec("CREATE TABLE Methods (MethName varchar(64), ImgId int, MethStart big int , MethEnd big int)");
+    db_exec_direct("CREATE TABLE Calls (VCLK big int, Method big int, Enter tiny int)");
+
+    // create image tables
+    db_exec_direct("CREATE TABLE Accesses (VCLK big int, MemAddress big int, InstrAddress big int, Write tiny int)");
+
 }
 
 
@@ -94,5 +122,20 @@ void db_add_method(std::string name , int image_id, unsigned long int start, uns
     ss << "INSERT INTO Methods VALUES(";
     ss << "\"" << name << "\"," ;
     ss << image_id << "," << start << "," << end << ")";
+    db_exec(ss.str());
+}
+
+void db_add_method_call(unsigned long int vclk, unsigned long int start, char enter)
+{
+    stringstream ss;
+    ss << "INSERT INTO Calls VALUES(" << vclk << "," << start << "," << (int)enter << ")";
+    db_exec(ss.str());
+}
+
+
+void db_add_mem_access(unsigned long int vclk, unsigned long int MemAddr, unsigned long int InstrAddr, char Write)
+{
+    stringstream ss;
+    ss << "INSERT INTO Accesses VALUES(" << vclk << "," << MemAddr << "," << InstrAddr << "," << (int)Write << ")";
     db_exec(ss.str());
 }
