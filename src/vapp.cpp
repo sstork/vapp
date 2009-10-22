@@ -129,6 +129,64 @@ VOID VAPPInstrumentRoutine(RTN rtn, VOID *v)
 }
 
 
+
+VOID VAPPInstrumentImage(IMG img, VOID *v)
+{
+    RTN rtn =  RTN_FindByName(img, "VAPPTraceOn");
+    // 'redirect' calls from control library
+    if ( RTN_Valid(rtn) ) {
+            RTN_Open(rtn);
+            // callback after we returned from call
+            RTN_InsertCall(rtn, 
+                           IPOINT_AFTER,
+                           (AFUNPTR)VAPPControlTraceOn,
+                           IARG_PTR, rtn,
+                           IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
+                           IARG_END);
+            RTN_Close(rtn);
+    }
+
+    rtn =  RTN_FindByName(img, "VAPPTraceOff");
+    if ( RTN_Valid(rtn) ) {
+            RTN_Open(rtn);
+            // callback after we returned from call
+            RTN_InsertCall(rtn, 
+                           IPOINT_BEFORE,
+                           (AFUNPTR)VAPPControlTraceOff,
+                           IARG_PTR, rtn,
+                           IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
+                           IARG_END);
+            RTN_Close(rtn);
+    }
+
+    rtn =  RTN_FindByName(img, "malloc");
+    if ( RTN_Valid(rtn) ) {
+            RTN_Open(rtn);
+            // callback after we returned from call
+            RTN_InsertCall(rtn, 
+                           IPOINT_AFTER,
+                           (AFUNPTR)VAPPMalloc,
+                           IARG_PTR, rtn,
+                           IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
+                           IARG_FUNCRET_EXITPOINT_VALUE,
+                           IARG_END);
+            RTN_Close(rtn);
+    }
+
+    rtn =  RTN_FindByName(img, "free");
+    if ( RTN_Valid(rtn) ) {
+            RTN_Open(rtn);
+            // callback after we returned from call
+            RTN_InsertCall(rtn, 
+                           IPOINT_BEFORE,
+                           (AFUNPTR)VAPPFree,
+                           IARG_PTR, rtn,
+                           IARG_FUNCARG_ENTRYPOINT_REFERENCE, 0,
+                           IARG_END);
+            RTN_Close(rtn);
+    }    
+}
+
 // This function is called when the application exits
 void VAPPFini(INT32 code, VOID *v)
 {
@@ -148,6 +206,9 @@ int main(int argc, char *argv[])
 
     // Initialize database
     db_init(KnobOutputFile.Value());
+
+    // Register Image to be called to instrument functions.
+    IMG_AddInstrumentFunction(VAPPInstrumentImage, 0);
     
     // Register Routine to be called to instrument rtn
     RTN_AddInstrumentFunction(VAPPInstrumentRoutine, 0);

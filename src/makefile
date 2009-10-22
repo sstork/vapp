@@ -46,6 +46,8 @@ EXTRA_LIBS = -lsqlite3
 TOOL_ROOTS = vapp
 EXTRA_OBJS= $(OBJDIR)callbacks.o $(OBJDIR)database.o 
 
+CXXFLAGS+= -I../libVAPPControl
+
 all: tools
 SANITY_TOOLS = 
 

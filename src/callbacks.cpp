@@ -39,30 +39,34 @@ using namespace std;
 
 
 static long int VCLOCK = 0;
+static vapp_flags_t  VAPPTracing = VAPP_NONE;
 
 // This function is called for every instruction reads from memory.
 void VAPPMemRead(void *ex, ADDRINT ip, ADDRINT raddr1, UINT32 rsize) {
-    //ex->memRead((long)ip, (long)raddr1, (int)rsize);
-    db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)raddr1, (unsigned long int)ip, 0);
-    db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)ip, (unsigned long int)ip, 0);
+    if ( VAPPTracing & VAPP_MEM_ACCESS) {
+        db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)raddr1, (unsigned long int)ip, 0);
+        db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)ip, (unsigned long int)ip, 0);
+    }
     VCLOCK++;
 }
 
 
 // This function is called for every instruction reads from memory.
 void VAPPMemRead2(void *ex, ADDRINT ip, ADDRINT raddr1, ADDRINT raddr2, UINT32 rsize) {
-    //ex->memRead((long)ip, (long)raddr1, (long)raddr2, (int)rsize);
-    db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)raddr1, (unsigned long int)ip, 0);
-    db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)raddr2, (unsigned long int)ip, 0);
-    db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)ip, (unsigned long int)ip, 0);
+    if ( VAPPTracing  & VAPP_MEM_ACCESS ) {
+        db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)raddr1, (unsigned long int)ip, 0);
+        db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)raddr2, (unsigned long int)ip, 0);
+        db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)ip, (unsigned long int)ip, 0);
+    }
     VCLOCK++;
 }
 
 
 // This function is called for every instruction write from memory.
 void VAPPMemWrite(void *ex, ADDRINT ip, ADDRINT waddr1, INT32 wsize) {
-    //ex->memWrite((long)ip, (long)waddr1, (int)wsize);
-    db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)waddr1, (unsigned long int)ip, 1);
+    if ( VAPPTracing  & VAPP_MEM_ACCESS  ) {
+        db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)waddr1, (unsigned long int)ip, 1);
+    }
     VCLOCK++;
 }
 
@@ -70,20 +74,51 @@ void VAPPMemWrite(void *ex, ADDRINT ip, ADDRINT waddr1, INT32 wsize) {
 // This function is called for all non memory access instructions.
 // We need this function for a correct instruction cache simulation.
 void VAPPInstruction(void *ex, void *ip) {
-    //ex->instruction((long)ip);
     VCLOCK++;
 }
 
 
 void VAPPRoutineEnter(RTN rtn)
 {
-    db_add_method_call(VCLOCK, RTN_Address(rtn), 1);
+    if ( VAPPTracing & VAPP_FN_CALL) {
+        db_add_method_call(VCLOCK, RTN_Address(rtn), 1);
+    }
 }
 
 void VAPPRoutineLeave(RTN rtn)
 {
-    db_add_method_call(VCLOCK, RTN_Address(rtn), 0);
+    if ( VAPPTracing & VAPP_FN_CALL) {
+        db_add_method_call(VCLOCK, RTN_Address(rtn), 0);
+    }
 }
 
+void VAPPMalloc(RTN rtn, ADDRINT size, ADDRINT *buf)
+{
+    cout << "malloc" << endl;
+    if ( VAPPTracing & VAPP_ALLOC_FREE ) {
+        db_add_malloc(VCLOCK, size, (unsigned long int)buf);
+    }
+}
+
+void VAPPFree(RTN rtn, ADDRINT *buf)
+{
+    if ( VAPPTracing & VAPP_ALLOC_FREE ) {
+        db_add_free(VCLOCK, (unsigned long int)buf);
+    }
+}
+
+
+void VAPPControlTraceOn(RTN rtn, ADDRINT param0)
+{
+    VAPPTracing = (vapp_flags_t)(VAPPTracing | param0);
+    cout << "VAPPTracing = " << hex << VAPPTracing << endl;
+}
+
+
+void VAPPControlTraceOff(RTN rtn, ADDRINT param0)
+{
+    VAPPTracing = (vapp_flags_t)(VAPPTracing & (~(param0)));
+    cout << "VAPPTracing = " << hex << VAPPTracing << endl;
+}
 
 
