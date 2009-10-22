@@ -47,10 +47,10 @@ void VAPPMemWrite(void *ex, ADDRINT ip, ADDRINT waddr1, INT32 wsize);
 // We need this function for a correct instruction cache simulation.
 void VAPPInstruction(void *ex, void *ip);
 
+void VAPPRoutineEnter(RTN rtn);
 
-void VAPPImageLoad(IMG img, VOID *v);
+void VAPPRoutineLeave(RTN rtn);
 
-VOID VAPPRoutine(RTN rtn, VOID *v);
 
 
 #endif // 

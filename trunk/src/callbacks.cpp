@@ -29,30 +29,41 @@
 #include "callbacks.h"
 #include "database.h"
 
+#include <stdlib.h>
+#include <libgen.h>
+
 #include <string>
-#include <map>
 #include <iostream>
 
 using namespace std;
 
-static map<string, int> image_map;
 
+static long int VCLOCK = 0;
 
 // This function is called for every instruction reads from memory.
 void VAPPMemRead(void *ex, ADDRINT ip, ADDRINT raddr1, UINT32 rsize) {
     //ex->memRead((long)ip, (long)raddr1, (int)rsize);
+    db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)raddr1, (unsigned long int)ip, 0);
+    db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)ip, (unsigned long int)ip, 0);
+    VCLOCK++;
 }
 
 
 // This function is called for every instruction reads from memory.
 void VAPPMemRead2(void *ex, ADDRINT ip, ADDRINT raddr1, ADDRINT raddr2, UINT32 rsize) {
     //ex->memRead((long)ip, (long)raddr1, (long)raddr2, (int)rsize);
+    db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)raddr1, (unsigned long int)ip, 0);
+    db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)raddr2, (unsigned long int)ip, 0);
+    db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)ip, (unsigned long int)ip, 0);
+    VCLOCK++;
 }
 
 
 // This function is called for every instruction write from memory.
 void VAPPMemWrite(void *ex, ADDRINT ip, ADDRINT waddr1, INT32 wsize) {
     //ex->memWrite((long)ip, (long)waddr1, (int)wsize);
+    db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)waddr1, (unsigned long int)ip, 1);
+    VCLOCK++;
 }
 
 
@@ -60,23 +71,19 @@ void VAPPMemWrite(void *ex, ADDRINT ip, ADDRINT waddr1, INT32 wsize) {
 // We need this function for a correct instruction cache simulation.
 void VAPPInstruction(void *ex, void *ip) {
     //ex->instruction((long)ip);
+    VCLOCK++;
 }
 
 
-
-
-
-VOID VAPPRoutine(RTN rtn, VOID *v)
+void VAPPRoutineEnter(RTN rtn)
 {
-    string img_name = basename(IMG_Name(SEC_Img(RTN_Sec(rtn))).c_str());
-    if ( image_map[img_name] == 0 ) {
-        image_map[img_name] = IMG_Id(SEC_Img(RTN_Sec(rtn)));
-        db_add_image(image_map[img_name], img_name);
-    }
-    int img_id = image_map[img_name];
-    string name = RTN_Name(rtn);
-    unsigned long int start =  RTN_Address(rtn);
-    unsigned long int end = start +  RTN_Size(rtn);
-    
-    db_add_method(name, img_id, start, end);
+    db_add_method_call(VCLOCK, RTN_Address(rtn), 1);
 }
+
+void VAPPRoutineLeave(RTN rtn)
+{
+    db_add_method_call(VCLOCK, RTN_Address(rtn), 0);
+}
+
+
+

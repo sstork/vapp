@@ -40,4 +40,9 @@ void db_add_image(int id, std::string name);
 
 void db_add_method(std::string name, int image_id, unsigned long int start, unsigned long int end);
 
+void db_add_method_call(unsigned long int vclk, unsigned long int start, char enter);
+
+void db_add_mem_access(unsigned long int vclk, unsigned long int MemAddr, unsigned long int InstrAddr, char Write);
+
+
 #endif // DATABASE_H

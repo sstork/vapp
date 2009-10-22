@@ -2,7 +2,8 @@
 ## PIN tools
 ##
 
-export PIN_HOME=/home/svens/build/pin-linux
+export PIN_HOME=/home/sven/build/pin-2.7-29972-gcc.3.4.6-ia32_intel64-linux
+#export PIN_HOME=/home/svens/build/pin-linux
 export PIN_KIT=${PIN_HOME}
 
 ##############################################################
@@ -79,7 +80,7 @@ Part1.test : $(OBJDIR)vapp$(PINTOOL_SUFFIX) vapp.tested vapp.failed $(OBJDIR)thr
 
 ## cleaning
 clean:
-	-rm -rf $(OBJDIR) *.out *.out.* *.tested *.failed
+	-rm -rf $(OBJDIR) *.out *.out.* *.tested *.failed *.vapp
 
 
 
