@@ -44,8 +44,8 @@ static vapp_flags_t  VAPPTracing = VAPP_NONE;
 // This function is called for every instruction reads from memory.
 void VAPPMemRead(void *ex, ADDRINT ip, ADDRINT raddr1, UINT32 rsize) {
     if ( VAPPTracing & VAPP_MEM_ACCESS) {
-        db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)raddr1, (unsigned long int)ip, 0);
         db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)ip, (unsigned long int)ip, 0);
+        db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)raddr1, (unsigned long int)ip, 0);
     }
     VCLOCK++;
 }
@@ -54,9 +54,9 @@ void VAPPMemRead(void *ex, ADDRINT ip, ADDRINT raddr1, UINT32 rsize) {
 // This function is called for every instruction reads from memory.
 void VAPPMemRead2(void *ex, ADDRINT ip, ADDRINT raddr1, ADDRINT raddr2, UINT32 rsize) {
     if ( VAPPTracing  & VAPP_MEM_ACCESS ) {
+        db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)ip, (unsigned long int)ip, 0);
         db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)raddr1, (unsigned long int)ip, 0);
         db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)raddr2, (unsigned long int)ip, 0);
-        db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)ip, (unsigned long int)ip, 0);
     }
     VCLOCK++;
 }
@@ -65,6 +65,7 @@ void VAPPMemRead2(void *ex, ADDRINT ip, ADDRINT raddr1, ADDRINT raddr2, UINT32 r
 // This function is called for every instruction write from memory.
 void VAPPMemWrite(void *ex, ADDRINT ip, ADDRINT waddr1, INT32 wsize) {
     if ( VAPPTracing  & VAPP_MEM_ACCESS  ) {
+        db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)ip, (unsigned long int)ip, 0);
         db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)waddr1, (unsigned long int)ip, 1);
     }
     VCLOCK++;
@@ -74,6 +75,9 @@ void VAPPMemWrite(void *ex, ADDRINT ip, ADDRINT waddr1, INT32 wsize) {
 // This function is called for all non memory access instructions.
 // We need this function for a correct instruction cache simulation.
 void VAPPInstruction(void *ex, void *ip) {
+    if ( VAPPTracing  & VAPP_MEM_ACCESS ) {
+        db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)ip, (unsigned long int)ip, 0);
+    }
     VCLOCK++;
 }
 

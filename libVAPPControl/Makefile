@@ -1,4 +1,4 @@
-CXXFLAGS=-fPIC -Wall -g
+CFLAGS=-fPIC -Wall -g
 
 all:libVAPPControl.a
 
