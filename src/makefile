@@ -2,8 +2,8 @@
 ## PIN tools
 ##
 
-export PIN_HOME=/home/sven/build/pin-2.7-29972-gcc.3.4.6-ia32_intel64-linux
-#export PIN_HOME=/home/svens/build/pin-linux
+#export PIN_HOME=/home/sven/build/pin-2.7-29972-gcc.3.4.6-ia32_intel64-linux
+export PIN_HOME=/home/svens/build/pin-2.7-29972-gcc.3.4.6-ia32_intel64-linux
 export PIN_KIT=${PIN_HOME}
 
 ##############################################################
