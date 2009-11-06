@@ -40,7 +40,7 @@ void fib(int *buf)
 
 
 int main(void){
-  int value;
+  int value = 0xdeadbeef;
   int *buffer;
   int i = 0;
 
