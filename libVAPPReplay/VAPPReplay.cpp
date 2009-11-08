@@ -29,8 +29,10 @@
 #include "Executor.h"
 
 #include <sqlite3.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <iostream>
 
 #include <list>
 
@@ -39,16 +41,18 @@ using namespace std;
 static sqlite3 *db = NULL;
 static list<Executor*> executors;
 
-struct mem_access_t {
-    unsigned long VCLK;
-    unsigned long MemAddress;
-    unsigned long InstrAddress;
-    bool Write;
+struct mem_stack_t {
+    int count;
+    struct {
+        unsigned long VCLK;
+        unsigned long MemAddress;
+        unsigned long InstrAddress;
+        bool Write;
+    } stack[4];
 };
 
-
-static int callback(void *NotUsed, int argc, char **argv, char **azColName){
-  int i;
+static int callback(void *vmem_stack, int argc, char **argv, char **azColName){
+  mem_stack_t *mem_stack = (mem_stack_t*)vmem_stack;
   enum {
       VCLK = 0,
       MemAddress = 1,
@@ -56,10 +60,82 @@ static int callback(void *NotUsed, int argc, char **argv, char **azColName){
       Write = 3
   };
 
-  for(i=0; i<argc; i++){
-    printf("%s = %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
+
+  if ( 0 == mem_stack->count ) {
+      // add to stack and continue
+      mem_stack->stack[0].VCLK = strtoll(argv[VCLK], NULL, 10);
+      mem_stack->stack[0].MemAddress = strtoll(argv[MemAddress], NULL, 10);
+      mem_stack->stack[0].InstrAddress = strtoll(argv[InstrAddress], NULL, 10);
+      if ( strtol(argv[Write], NULL, 10)  ) {
+          mem_stack->stack[0].Write = true;
+      } else {
+          mem_stack->stack[0].Write = false;          
+      }
+      mem_stack->count++;
+      return 0;
+  } else {
+      int count = mem_stack->count;
+      if ( mem_stack->stack[count-1].VCLK == (unsigned long long)strtoll(argv[VCLK], NULL, 10) ) {
+          // add next part of the instruction to the stack
+          mem_stack->stack[count].VCLK = strtoll(argv[VCLK], NULL, 10);
+          mem_stack->stack[count].MemAddress = strtoll(argv[MemAddress], NULL, 10);
+          mem_stack->stack[count].InstrAddress = strtoll(argv[InstrAddress], NULL, 10);
+          if ( strtol(argv[Write], NULL, 10)  ) {
+              mem_stack->stack[count].Write = true;
+          } else {
+              mem_stack->stack[count].Write = false;          
+          }
+          mem_stack->count++;
+          return 0;
+      } else {
+          // replay old instruction 
+
+          for ( list<Executor*>::iterator it = executors.begin() ; 
+                it != executors.end() ;
+                it++ ) {
+              Executor *ex = *it;
+              //ex->doReport(cout);
+              switch(mem_stack->count) {
+              case 1:
+                  ex->instruction(mem_stack->stack[0].InstrAddress);
+                  break;
+              case 2:
+                  if ( mem_stack->stack[1].Write ) {
+                      ex->memWrite(mem_stack->stack[1].InstrAddress, 
+                                   mem_stack->stack[1].MemAddress,
+                                   0);
+                  } else {
+                      ex->memRead(mem_stack->stack[1].InstrAddress, 
+                                  mem_stack->stack[1].MemAddress,
+                                  0);
+                  }
+                  break;
+              case 3:
+                  ex->memRead(mem_stack->stack[1].InstrAddress, 
+                              mem_stack->stack[1].MemAddress,
+                              mem_stack->stack[2].MemAddress,
+                              0);
+                  break;
+              }
+          }
+          
+          mem_stack->count = 0;
+
+          // start adding next instruction to stack
+          mem_stack->stack[0].VCLK = strtoll(argv[VCLK], NULL, 10);
+          mem_stack->stack[0].MemAddress = strtoll(argv[MemAddress], NULL, 10);
+          mem_stack->stack[0].InstrAddress = strtoll(argv[InstrAddress], NULL, 10);
+          if ( strtol(argv[Write], NULL, 10)  ) {
+          mem_stack->stack[0].Write = true;
+          } else {
+              mem_stack->stack[0].Write = false;          
+          }
+          mem_stack->count++;
+          return 0;
+      }
   }
-  printf("\n");
+  
+  
   return 0;
 }
 
@@ -80,6 +156,15 @@ bool vappr_finalize()
     if ( db == NULL ) return false;
     sqlite3_close(db);
     db = NULL;
+
+    // trigger doReport method
+    for ( list<Executor*>::iterator it = executors.begin() ; 
+          it != executors.end() ;
+          it++ ) {
+        Executor *ex = *it;
+        ex->doReport(cout);
+    }
+
     return true;
 }
 
@@ -93,12 +178,12 @@ bool vappr_add_executor(Executor* ex)
 bool vappr_run_memory_accesses()
 {
     char *zErrMsg = 0;
-    mem_access_t mem_stack[3];
+    mem_stack_t mem_stack;
     if ( db == NULL ) return false;
 
-    memset(mem_stack, 0x0, 3*sizeof(mem_access_t));
-
-    int rc = sqlite3_exec(db, "SELECT * FROM MemoryAccesses", callback, 0, &zErrMsg);
+    memset(&mem_stack, 0x0, sizeof(mem_stack_t));
+    
+    int rc = sqlite3_exec(db, "SELECT * FROM MemoryAccesses", callback, &mem_stack, &zErrMsg);
     if( rc!=SQLITE_OK ){
         fprintf(stderr, "SQL error: %s\n", zErrMsg);
         sqlite3_free(zErrMsg);
