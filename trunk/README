@@ -1,5 +1,5 @@
 Building
 ========================================================================
-Set the PIN_HOME variable in the src/makefile to point to the
-top-level directiry of the pin distribution. Then execute make in the
-src directory 'make'.
+Set the PIN_HOME variable and execute the make command on the top directory. 
+
+Alternatively you can specify at the PIN_HOME variable at the command line : make PIN_HOME=/path/to/pin.

@@ -29,6 +29,7 @@
 #define EXECUTOR_H
 
 #include <string>
+#include <ostream>
 
 class Executor {
     
@@ -48,7 +49,7 @@ class Executor {
     virtual void instruction(long ip) = 0;
 
     // is called when the simulation ends to generate the final report
-    virtual void doReport(std::string filename) = 0;
+    virtual void doReport(std::ostream &os) = 0;
         
 };
 
