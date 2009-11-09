@@ -1,6 +1,6 @@
 // -*- c-basic-offset : 4 -*-
 /*
- * Copyright (c) 2009, Antony Gitter, Sven Stork
+ * Copyright (c) 2009, Anthony Gitter, Sven Stork
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -34,7 +34,7 @@
 
 using namespace std;
 
-int main(int argc, char *argv[]) 
+int main(int argc, char *argv[])
 {
     //    Executor *ex = NULL;
     if ( argc < 2 ) {
@@ -49,10 +49,10 @@ int main(int argc, char *argv[])
     }
 
     // add instruction counter
-    vappr_add_executor(new Part(128*1024 /* cache size */, 
+    vappr_add_executor(new Part(128*1024 /* cache size */,
                                 64 /* line size */,
                                 20 /* cacheMissLatency */,
-                                100 /* memoryRepeatRate */, 
+                                100 /* memoryRepeatRate */,
                                 4 /* associativity */,
                                 2 /* prefetch */,
                                 PREFETCH_FINITE_BW /* prefecth mode */)
@@ -60,8 +60,8 @@ int main(int argc, char *argv[])
 
     // run memory accesses
     vappr_run_memory_accesses();
-    
-    // cleanup 
+
+    // cleanup
     vappr_finalize();
 
     return 0;

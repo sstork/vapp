@@ -1,6 +1,6 @@
-// -*- Mode : C++ ; c-basic-offset : 4 -*- 
+// -*- Mode : C++ ; c-basic-offset : 4 -*-
 /*
- * Copyright (c) 2009, Antony Gitter, Sven Stork
+ * Copyright (c) 2009, Anthony Gitter, Sven Stork
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -31,11 +31,11 @@
 
 #include "Cache.h"
 
-class InfinitePrefetchAssociativeCache : public Cache 
+class InfinitePrefetchAssociativeCache : public Cache
 {
  protected:
     CacheLine **cacheSet;
-  
+
  public:
     InfinitePrefetchAssociativeCache(int cacheSize,
                                      int lineSize,
@@ -44,7 +44,7 @@ class InfinitePrefetchAssociativeCache : public Cache
                                      int associativity,
                                      int prefefetch);
     virtual ~InfinitePrefetchAssociativeCache();
-    
+
     virtual CacheStats read(long addr, int size);
     virtual CacheStats write(long addr, int size);
 

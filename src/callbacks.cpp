@@ -1,6 +1,6 @@
 // -*- c-basic-offset : 4 -*-
 /*
- * Copyright (c) 2009, Antony Gitter, Sven Stork
+ * Copyright (c) 2009, Anthony Gitter, Sven Stork
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -40,45 +40,65 @@ using namespace std;
 
 static long int VCLOCK = 0;
 static vapp_flags_t  VAPPTracing = VAPP_NONE;
+static PIN_LOCK cb_lock;
 
 // This function is called for every instruction reads from memory.
 void VAPPMemRead(void *ex, ADDRINT ip, ADDRINT raddr1, UINT32 rsize) {
+    OS_THREAD_ID tid = PIN_GetTid();
+
     if ( VAPPTracing & VAPP_MEM_ACCESS) {
-        db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)ip, (unsigned long int)ip, 0);
-        db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)raddr1, (unsigned long int)ip, 0);
+        db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)ip, (unsigned long int)ip, tid, 0);
+        db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)raddr1, (unsigned long int)ip, tid, 0);
     }
+
+    GetLock(&cb_lock, tid+1);
     VCLOCK++;
+    ReleaseLock(&cb_lock);
 }
 
 
 // This function is called for every instruction reads from memory.
 void VAPPMemRead2(void *ex, ADDRINT ip, ADDRINT raddr1, ADDRINT raddr2, UINT32 rsize) {
+    OS_THREAD_ID tid = PIN_GetTid();
+
     if ( VAPPTracing  & VAPP_MEM_ACCESS ) {
-        db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)ip, (unsigned long int)ip, 0);
-        db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)raddr1, (unsigned long int)ip, 0);
-        db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)raddr2, (unsigned long int)ip, 0);
+        db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)ip, (unsigned long int)ip, tid, 0);
+        db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)raddr1, (unsigned long int)ip, tid, 0);
+        db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)raddr2, (unsigned long int)ip, tid, 0);
     }
+
+    GetLock(&cb_lock, tid+1);
     VCLOCK++;
+    ReleaseLock(&cb_lock);
 }
 
 
 // This function is called for every instruction write from memory.
 void VAPPMemWrite(void *ex, ADDRINT ip, ADDRINT waddr1, INT32 wsize) {
+    OS_THREAD_ID tid = PIN_GetTid();
+
     if ( VAPPTracing  & VAPP_MEM_ACCESS  ) {
-        db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)ip, (unsigned long int)ip, 0);
-        db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)waddr1, (unsigned long int)ip, 1);
+        db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)ip, (unsigned long int)ip, tid, 0);
+        db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)waddr1, (unsigned long int)ip, tid, 1);
     }
+
+    GetLock(&cb_lock, tid+1);
     VCLOCK++;
+    ReleaseLock(&cb_lock);
 }
 
 
 // This function is called for all non memory access instructions.
 // We need this function for a correct instruction cache simulation.
 void VAPPInstruction(void *ex, void *ip) {
+    OS_THREAD_ID tid = PIN_GetTid();
+
     if ( VAPPTracing  & VAPP_MEM_ACCESS ) {
-        db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)ip, (unsigned long int)ip, 0);
+        db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)ip, (unsigned long int)ip, tid, 0);
     }
+    GetLock(&cb_lock, tid+1);
     VCLOCK++;
+    ReleaseLock(&cb_lock);
 }
 
 
@@ -113,13 +133,26 @@ void VAPPFree(RTN rtn, ADDRINT *buf)
 
 void VAPPControlTraceOn(RTN rtn, ADDRINT param0)
 {
+    GetLock(&cb_lock, PIN_GetTid()+1);
+
     VAPPTracing = (vapp_flags_t)(VAPPTracing | param0);
+
+    ReleaseLock(&cb_lock);
 }
 
 
 void VAPPControlTraceOff(RTN rtn, ADDRINT param0)
 {
+    GetLock(&cb_lock, PIN_GetTid()+1);
+
     VAPPTracing = (vapp_flags_t)(VAPPTracing & (~(param0)));
+
+    ReleaseLock(&cb_lock);
 }
 
+void cb_init()
+{
+    // Initialize the pin lock
+    InitLock(&cb_lock);
+}
 

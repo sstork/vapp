@@ -1,6 +1,6 @@
 // -*- c-basic-offset : 4 -*-
 /*
- * Copyright (c) 2009, Antony Gitter, Sven Stork
+ * Copyright (c) 2009, Anthony Gitter, Sven Stork
  * All rights reserved.
  1;1613;0c*
  * Redistribution and use in source and binary forms, with or without modification,
@@ -47,10 +47,10 @@ int main(void){
   VAPPTraceOn(VAPP_MEM_ACCESS | VAPP_FN_CALL | VAPP_ALLOC_FREE);
 
   buffer = (int*)malloc(SIZE*SIZE*sizeof(int));
-  
+
   printf("HelloWorld\n");
 
-  
+
   for ( i = 0 ; i < SIZE*SIZE ; i++ ) {
       buffer[i] = value;
   }

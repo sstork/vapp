@@ -1,6 +1,6 @@
 // -*- Mode : C++ ; c-basic-offset : 4 -*- x
 /*
- * Copyright (c) 2009, Antony Gitter, Sven Stork
+ * Copyright (c) 2009, Anthony Gitter, Sven Stork
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -40,15 +40,15 @@ FinitePrefetchAssociativeCache::FinitePrefetchAssociativeCache(int cacheSize,
                                                                int associativity,
                                                                int prefetch)
     : Cache(cacheSize, lineSize, cacheMissLatency, memoryRepeatRate, associativity, prefetch)
-{   
-    // fix cache lines 
+{
+    // fix cache lines
     int i = cacheAssociativity-1;
     while ( i ) {
         cacheLines = cacheLines >> 1;
         i = i>>1;
     }
 
-    // allocate cache structure 
+    // allocate cache structure
     cacheSet = new CacheLine *[cacheLines];
     for ( int i = 0; i < cacheLines ; i++ ) {
         cacheSet[i] = new CacheLine[associativity];
@@ -56,7 +56,7 @@ FinitePrefetchAssociativeCache::FinitePrefetchAssociativeCache(int cacheSize,
 }
 
 FinitePrefetchAssociativeCache::~FinitePrefetchAssociativeCache()
-{ 
+{
     for ( int i = 0; i< cacheAssociativity; i++ ) {
         delete cacheSet[i];
     }
@@ -76,7 +76,7 @@ long FinitePrefetchAssociativeCache::getIndex(long addr) {
     }
     // clean leading bits
     long index = addr & mask;
-    
+
     // cacheline bits
     i = lineSize - 1;
     for ( ; i > 0 ; i = i >> 1) {
@@ -88,7 +88,7 @@ long FinitePrefetchAssociativeCache::getIndex(long addr) {
 }
 
 
-    
+
 CacheStats FinitePrefetchAssociativeCache::read(long addr, int size)
 {
     return accessPrefetch(addr, size, false);
@@ -110,28 +110,28 @@ CacheStats FinitePrefetchAssociativeCache::accessPrefetch(long addr, int size, b
         // hit in the cache or no outstanding requests
         stats = access(addr, size, write);
     } else {
-        // the value is not in the cache / no 
-        // check if the cacheline already has been requested 
+        // the value is not in the cache / no
+        // check if the cacheline already has been requested
         bool requested = false;
         for ( ; it != prefetchQueue.end() ; it++ ) {
             if ( (*it).getAddress() == addr ) {
                 requested = true;
             }
         }
-        
+
         if ( !requested ) {
-            // append to list of outstanding objects 
+            // append to list of outstanding objects
             // add this request to append this request to the queue
             prefetchQueue.push_back(Request(addr, RDTSC(), size));
-            
-        } 
-        
-        // operate on outstanding request until the current request has been satisfied 
+
+        }
+
+        // operate on outstanding request until the current request has been satisfied
         int cycles = 0;
         bool done = false;
         do {
             if ( addr == prefetchQueue.front().getAddress() ) {
-                // finally 
+                // finally
                 access(prefetchQueue.front().getAddress(),
                        prefetchQueue.front().getSize(),
                        write);
@@ -141,15 +141,15 @@ CacheStats FinitePrefetchAssociativeCache::accessPrefetch(long addr, int size, b
                 access(prefetchQueue.front().getAddress(),
                        prefetchQueue.front().getSize(),
                        false);
-                           
+
             }
             cycles += memoryRepeatRate;  // update cycles
             prefetchQueue.pop_front();   // remove processed element
         } while ( !done );
-            
+
         stats = CacheStats(1, 0, cycles);
     }
-    
+
     // prefetch k cache lines
     if ( prefetchQueue.size() == 0 ) {
         for ( int i = 0 ; i < cachePrefetch ; i++ ) {
@@ -165,13 +165,13 @@ CacheStats FinitePrefetchAssociativeCache::access(long addr, int size, bool writ
     int misses = 0;
     int hits   = 0;
     CacheLine *replace = NULL;
-    
+
     long index = getIndex(addr);
-    
+
     CacheLine *cs = cacheSet[index];
     for ( int i = 0; i < cacheAssociativity ; i++ ) {
         // check if we have an valid entry in the cache
-        if ( cs[i].isValid() ) {           
+        if ( cs[i].isValid() ) {
             if ( cs[i].getTag() != getTag(addr) ) {
                 if ( replace != NULL ) {
                     if ( cs[i].getLRU() < replace->getLRU() ) {
@@ -181,7 +181,7 @@ CacheStats FinitePrefetchAssociativeCache::access(long addr, int size, bool writ
                     replace = &cs[i];
                 }
             } else {
-                // we have a hit            
+                // we have a hit
                 cs[i].setLRU( RDTSC() );
                 if ( write ) {
                     cs[i].setDirty(true);
@@ -193,11 +193,11 @@ CacheStats FinitePrefetchAssociativeCache::access(long addr, int size, bool writ
             // cache not valid -> always least recently used
             replace = &cs[i];
         }
-        
+
     }
-    
+
     if ( NULL != replace ) {
-        // we had not hit and candidate points to the line that needs to be replaced 
+        // we had not hit and candidate points to the line that needs to be replaced
         misses = 1;
         replace->setTag( getTag(addr) );
         replace->setLRU( RDTSC() );
@@ -213,12 +213,12 @@ CacheStats FinitePrefetchAssociativeCache::access(long addr, int size, bool writ
 bool FinitePrefetchAssociativeCache::inCache(long addr)
 {
     long index = getIndex(addr);
-   
+
     CacheLine *cs = cacheSet[index];
     for ( int i = 0; i < cacheAssociativity ; i++ ) {
         if ( cs[i].isValid() &&  cs[i].getTag() == getTag(addr) ) {
             return true;
-        }        
+        }
     }
     return false;
 }

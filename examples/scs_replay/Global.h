@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, Antony Gitter, Sven Stork
+ * Copyright (c) 2009, Anthony Gitter, Sven Stork
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,

@@ -1,6 +1,6 @@
-// -*- Mode : C++ ; c-basic-offset : 4 -*- 
+// -*- Mode : C++ ; c-basic-offset : 4 -*-
 /*
- * Copyright (c) 2009, Antony Gitter, Sven Stork
+ * Copyright (c) 2009, Anthony Gitter, Sven Stork
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -46,11 +46,11 @@ class Entry {
     long writeMissCycles;
 
  public:
-   Entry(long ip) 
-     : address(ip), usage(0), readCacheMisses(0), writeCacheMisses(0), 
-        readCacheHits(0), writeCacheHits(0), 
+   Entry(long ip)
+     : address(ip), usage(0), readCacheMisses(0), writeCacheMisses(0),
+        readCacheHits(0), writeCacheHits(0),
         readMissCycles(0), writeMissCycles(0) {}
-    
+
     long getAddress() { return address; }
     long getUsage() { return usage; }
     long getReadCacheMisses() { return readCacheMisses; }
@@ -65,8 +65,8 @@ class Entry {
     void addToWriteCacheMisses(long v) { writeCacheMisses += v; }
     void addToReadCacheHits(long v) { readCacheHits += v; }
     void addToWriteCacheHits(long v) { writeCacheHits += v; }
-    void addToReadMissCycles(long v) { readMissCycles += v; }    
-    void addToWriteMissCycles(long v) { writeMissCycles += v; }    
+    void addToReadMissCycles(long v) { readMissCycles += v; }
+    void addToWriteMissCycles(long v) { writeMissCycles += v; }
 };
 
 
@@ -76,7 +76,7 @@ class Profiler {
     /* int cacheMissLatency; */
     /* int memoryRepeatRate; */
 
-    
+
  public:
     /* Profiler(int cacheMissLatency, int memoryRepeatRate); */
     /* ~Profiler(); */
@@ -89,10 +89,10 @@ class Profiler {
     long getTotalStallCycles();
 
  protected:
-    void reportEntires(std::ostream &report, 
-                       std::list<Entry*> &entires, 
-                       long totalReadMisses, 
-                       long totalReadHits, 
+    void reportEntires(std::ostream &report,
+                       std::list<Entry*> &entires,
+                       long totalReadMisses,
+                       long totalReadHits,
                        long totalWriteMisses,
                        long totalWriteHits);
 

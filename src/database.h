@@ -1,6 +1,6 @@
 // -*- c-basic-offset : 4 -*-
 /*
- * Copyright (c) 2009, Antony Gitter, Sven Stork
+ * Copyright (c) 2009, Anthony Gitter, Sven Stork
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -28,12 +28,14 @@
 #ifndef DATABASE_H
 #define DATABASE_H
 
+#include "pin.H"
+
 #include <string>
 
-// This function must be called before any other function can be called 
+// This function must be called before any other function can be called
 void db_init(std::string name);
 
-// This function must be called before the application terminates 
+// This function must be called before the application terminates
 void db_finalize();
 
 void db_add_image(int id, std::string name);
@@ -42,7 +44,7 @@ void db_add_method(std::string name, int image_id, unsigned long int start, unsi
 
 void db_add_method_call(unsigned long int vclk, unsigned long int start, char enter);
 
-void db_add_mem_access(unsigned long int vclk, unsigned long int MemAddr, unsigned long int InstrAddr, char Write);
+void db_add_mem_access(unsigned long int vclk, unsigned long int MemAddr, unsigned long int InstrAddr, OS_THREAD_ID tid, char Write);
 
 void db_add_malloc(unsigned long int vclk, int size, unsigned long int address);
 

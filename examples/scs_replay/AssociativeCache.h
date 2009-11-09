@@ -1,6 +1,6 @@
-// -*- Mode : C++ ; c-basic-offset : 4 -*- 
+// -*- Mode : C++ ; c-basic-offset : 4 -*-
 /*
- * Copyright (c) 2009, Antony Gitter, Sven Stork
+ * Copyright (c) 2009, Anthony Gitter, Sven Stork
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -31,11 +31,11 @@
 
 #include "Cache.h"
 
-class AssociativeCache  : public Cache 
+class AssociativeCache  : public Cache
 {
  protected:
     CacheLine **cacheSet;
-  
+
  public:
     AssociativeCache(int cacheSize,
                      int lineSize,
@@ -44,7 +44,7 @@ class AssociativeCache  : public Cache
                      int associativity,
                      int prefefetch);
     virtual ~AssociativeCache();
-    
+
     virtual CacheStats read(long addr, int size);
     virtual CacheStats write(long addr, int size);
 
