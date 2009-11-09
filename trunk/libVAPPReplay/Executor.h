@@ -1,6 +1,6 @@
 // -*- c-basic-offset : 4 -*-
 /*
- * Copyright (c) 2009, Antony Gitter, Sven Stork
+ * Copyright (c) 2009, Anthony Gitter, Sven Stork
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -32,7 +32,7 @@
 #include <ostream>
 
 class Executor {
-    
+
  public:
     virtual ~Executor() {}
 
@@ -41,7 +41,7 @@ class Executor {
 
     // is called for instructions that read two memory location
     virtual void memRead(long ip, long addr1, long addr2, int size) = 0;
-    
+
     // is called for instructions that write to memory
     virtual void memWrite(long ip, long addr, int size) = 0;
 
@@ -50,7 +50,7 @@ class Executor {
 
     // is called when the simulation ends to generate the final report
     virtual void doReport(std::ostream &os) = 0;
-        
+
 };
 
 #endif // EXECUTOR_H

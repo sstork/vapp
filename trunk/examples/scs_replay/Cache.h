@@ -1,6 +1,6 @@
-// -*- Mode : C++ ; c-basic-offset : 4 -*- 
+// -*- Mode : C++ ; c-basic-offset : 4 -*-
 /*
- * Copyright (c) 2009, Antony Gitter, Sven Stork
+ * Copyright (c) 2009, Anthony Gitter, Sven Stork
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -36,14 +36,14 @@
 class CacheStats {
  private:
     int cacheMisses;
-    int cacheHits;    
+    int cacheHits;
     int cacheCycles;
 
  public:
     CacheStats() : cacheMisses(0), cacheHits(0), cacheCycles(0) {}
     CacheStats(int misses, int hits, int cycles) : cacheMisses(misses), cacheHits(hits), cacheCycles(cycles) {}
-    
-    int getMisses()  { return cacheMisses; } 
+
+    int getMisses()  { return cacheMisses; }
     int getHits() { return cacheHits; }
     int getCycles() { return cacheCycles; }
 };
@@ -70,7 +70,7 @@ class Cache {
           int prefech);
 
     virtual ~Cache() {}
-    
+
     int getCacheSize() { return cacheSize; }
     int getLineSize() { return lineSize; }
     int getCacheMissRate() { return cacheMissLatency; }
@@ -80,11 +80,11 @@ class Cache {
     virtual CacheStats write(long addr, int size) = 0;
 
     virtual void doReport(std::ostream &report);
-    
+
     virtual long getIndex(long addr);
     virtual long int getTag(long addr);
 };
- 
+
 
 class CacheLine {
  protected:
@@ -96,17 +96,17 @@ class CacheLine {
  public:
  CacheLine() : tag(0), valid(false), dirty(false), lru(0) {}
 
-    long getTag() { return tag; } 
+    long getTag() { return tag; }
     void setTag(long v) { tag = v; }
 
-    bool isValid() { return valid; } 
+    bool isValid() { return valid; }
     void setValid(bool v) { valid = v; }
 
     bool isDirty() { return dirty; }
     void setDirty(bool v) { dirty = v; }
 
     long getLRU() { return lru; }
-    void setLRU(long v) { lru = v; } 
+    void setLRU(long v) { lru = v; }
 };
 
 #endif // CACHE_H

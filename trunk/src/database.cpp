@@ -1,6 +1,6 @@
 // -*- c-basic-offset : 4 -*-
 /*
- * Copyright (c) 2009, Antony Gitter, Sven Stork
+ * Copyright (c) 2009, Anthony Gitter, Sven Stork
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -39,10 +39,12 @@ using namespace std;
 
 static sqlite3 *db = NULL;
 static list<string> db_buf;
+static PIN_LOCK db_lock;  // sqlite db can only be used by one thread at a time
 
 
 
-
+// This function is always inside the critical section.  It is assumed that
+// the calling thread already has the db_lock
 static void db_exec_direct(string cmd)
 {
     if ( sqlite3_exec(db, cmd.c_str(), NULL, NULL, NULL) != SQLITE_OK ) {
@@ -55,6 +57,8 @@ static void db_exec_direct(string cmd)
 
 static inline void db_exec(string cmd)
 {
+    GetLock(&db_lock, PIN_GetTid()+1);
+
     db_buf.push_back(cmd);
 
     if ( db_buf.size() >= 20000 ) {
@@ -65,11 +69,19 @@ static inline void db_exec(string cmd)
         db_exec_direct("END;");
         db_buf.clear();
     }
+
+    ReleaseLock(&db_lock);
 }
 
 
 void db_init(std::string name)
 {
+    // Initialize the pin lock
+    InitLock(&db_lock);
+
+
+    // No need to lock this code.  It executes before the call to PIN_StartProgram()
+    // and is therefore single-threaded
     int rc;
     if ( NULL == db ) {
         std::string filename = name + ".vapp";
@@ -94,7 +106,7 @@ void db_init(std::string name)
     db_exec_direct("CREATE TABLE Calls (VCLK big int, Method big int, Enter tiny int)");
 
     // create image tables
-    db_exec_direct("CREATE TABLE MemoryAccesses (VCLK big int, MemAddress big int, InstrAddress big int, Write tiny int)");
+    db_exec_direct("CREATE TABLE MemoryAccesses (VCLK big int, MemAddress big int, InstrAddress big int, ThreadId int, Write tiny int)");
 
     // create Malloc tables
     db_exec_direct("CREATE TABLE Mallocs (VCLK big int, Size int, Address big int)");
@@ -107,6 +119,8 @@ void db_init(std::string name)
 
 void db_finalize()
 {
+    GetLock(&db_lock, PIN_GetTid()+1);
+
     if ( db != NULL ) {
         if ( db_buf.size() > 0 ) {
             db_exec_direct("BEGIN;");
@@ -119,6 +133,8 @@ void db_finalize()
         sqlite3_close(db);
         db = NULL;
     }
+
+    ReleaseLock(&db_lock);
 }
 
 
@@ -148,10 +164,10 @@ void db_add_method_call(unsigned long int vclk, unsigned long int start, char en
 }
 
 
-void db_add_mem_access(unsigned long int vclk, unsigned long int MemAddr, unsigned long int InstrAddr, char Write)
+void db_add_mem_access(unsigned long int vclk, unsigned long int MemAddr, unsigned long int InstrAddr, OS_THREAD_ID tid, char Write)
 {
     stringstream ss;
-    ss << "INSERT INTO MemoryAccesses VALUES(" << vclk << "," << MemAddr << "," << InstrAddr << "," << (int)Write << ")";
+    ss << "INSERT INTO MemoryAccesses VALUES(" << vclk << "," << MemAddr << "," << InstrAddr << ", " << tid << "," << (int)Write << ")";
     db_exec(ss.str());
 }
 

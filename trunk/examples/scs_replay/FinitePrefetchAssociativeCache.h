@@ -1,6 +1,6 @@
-// -*- Mode : C++ ; c-basic-offset : 4 -*- 
+// -*- Mode : C++ ; c-basic-offset : 4 -*-
 /*
- * Copyright (c) 2009, Antony Gitter, Sven Stork
+ * Copyright (c) 2009, Anthony Gitter, Sven Stork
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -36,9 +36,9 @@
 class Request {
  private:
     long address;
-    long tsc;     // the tsc when this request was issues 
+    long tsc;     // the tsc when this request was issues
     int size;
-    
+
  public:
  Request(long address, long tsc, int size) : address(address), tsc(tsc), size(size) {}
  Request() : address(0), tsc(0), size(0) {}
@@ -47,7 +47,7 @@ class Request {
         tsc     = other.tsc;
         size    = other.size;
     }
-    
+
     long getAddress() { return address; }
     long getTSC() { return address; }
     int getSize() { return size; }
@@ -55,12 +55,12 @@ class Request {
 
 
 
-class FinitePrefetchAssociativeCache : public Cache 
+class FinitePrefetchAssociativeCache : public Cache
 {
  protected:
     CacheLine **cacheSet;
     std::list<Request> prefetchQueue;
-   
+
 
  public:
     FinitePrefetchAssociativeCache(int cacheSize,
@@ -70,7 +70,7 @@ class FinitePrefetchAssociativeCache : public Cache
                                    int associativity,
                                    int prefefetch);
     virtual ~FinitePrefetchAssociativeCache();
-    
+
     virtual CacheStats read(long addr, int size);
     virtual CacheStats write(long addr, int size);
 

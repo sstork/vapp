@@ -1,6 +1,6 @@
 // -*- c-basic-offset : 4 -*-
 /*
- * Copyright (c) 2009, Antony Gitter, Sven Stork
+ * Copyright (c) 2009, Anthony Gitter, Sven Stork
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -26,7 +26,7 @@
  * OF SUCH DAMAGE.
  */
 
-#include <iostream> 
+#include <iostream>
 #include <Executor.h>
 #include <VAPPReplay.h>
 
@@ -51,15 +51,15 @@ public:
     {
         instCount++;
     }
-    
+
     // is called for instructions that write to memory
-    virtual void memWrite(long ip, long addr, int size) 
+    virtual void memWrite(long ip, long addr, int size)
     {
         instCount++;
     }
 
     // called for all other instructions
-    virtual void instruction(long ip) 
+    virtual void instruction(long ip)
     {
         instCount++;
     }
@@ -72,7 +72,7 @@ public:
 };
 
 
-int main (int argc, char *argv[]) 
+int main (int argc, char *argv[])
 {
     if ( argc < 2 ) {
         cout << "usage : simple_replay [FILENAME]" << endl;
@@ -90,8 +90,8 @@ int main (int argc, char *argv[])
 
     // run memory accesses
     vappr_run_memory_accesses();
-    
-    // cleanup 
+
+    // cleanup
     vappr_finalize();
 
     return 0;

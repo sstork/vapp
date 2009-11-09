@@ -1,6 +1,6 @@
-// -*- Mode : C++ ; c-basic-offset : 4 -*- 
+// -*- Mode : C++ ; c-basic-offset : 4 -*-
 /*
- * Copyright (c) 2009, Antony Gitter, Sven Stork
+ * Copyright (c) 2009, Anthony Gitter, Sven Stork
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -38,7 +38,7 @@ Cache::Cache(int cacheSize,
              int cacheMissLatency,
              int memoryRepeatRate,
              int associativity,
-             int prefetch) 
+             int prefetch)
 {
     this->cacheSize          = cacheSize;
     this->lineSize           = lineSize;
@@ -54,7 +54,7 @@ Cache::Cache(int cacheSize,
 void Cache::doReport(std::ostream &report)
 {
     report << endl;
-    report << " Configuration: size = " << (cacheSize/1024) << "KB, line size = " << lineSize << "B, associativity = " << cacheAssociativity << "-way," << endl << 
+    report << " Configuration: size = " << (cacheSize/1024) << "KB, line size = " << lineSize << "B, associativity = " << cacheAssociativity << "-way," << endl <<
         "   miss latency = " << cacheMissLatency << " cycles, prefetch repeat rate = " << memoryRepeatRate << " cycles" << endl;
 }
 

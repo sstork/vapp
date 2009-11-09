@@ -1,6 +1,6 @@
 // -*- c-basic-offset : 4 -*-
 /*
- * Copyright (c) 2009, Antony Gitter, Sven Stork
+ * Copyright (c) 2009, Anthony Gitter, Sven Stork
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -61,5 +61,7 @@ void VAPPMalloc(RTN rtn, ADDRINT size, ADDRINT *buf);
 
 void VAPPFree(RTN rtn, ADDRINT *buf);
 
+void cb_init();
 
-#endif // 
+
+#endif //

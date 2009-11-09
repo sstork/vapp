@@ -1,6 +1,6 @@
-// -*- Mode : C++ ; c-basic-offset : 4 -*- 
+// -*- Mode : C++ ; c-basic-offset : 4 -*-
 /*
- * Copyright (c) 2009, Antony Gitter, Sven Stork
+ * Copyright (c) 2009, Anthony Gitter, Sven Stork
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -50,7 +50,7 @@ Part::Part(int cacheSize,
            int prefetch,
            PrefetchMode mode)
   : cacheSize(cacheSize), lineSize(lineSize), cacheMissLatency(cacheMissLatency),
-    memoryRepeatRate(memoryRepeatRate), cacheAssociativity(associativity), cachePrefetch(prefetch), 
+    memoryRepeatRate(memoryRepeatRate), cacheAssociativity(associativity), cachePrefetch(prefetch),
     instrCache(NULL), dataCache(NULL)
 {
     switch (mode) {
@@ -89,12 +89,12 @@ void Part::memRead(long ip, long addr, int size)
 {
     int cycles = 1; // for the instruction itself
     CacheStats stats;
-    
+
     // check if the instruction causes an miss
     stats = instrCache->read(ip, 1);
     instrProfiler->addToRead(ip, stats.getHits(), stats.getMisses(), stats.getCycles());
     cycles += stats.getCycles();
-    
+
     // check if the memory reference causes a miss
     stats = dataCache->read(addr, size);
     dataProfiler->addToRead(ip, stats.getHits(), stats.getMisses(), stats.getCycles());
@@ -142,7 +142,7 @@ void Part::memWrite(long ip, long addr, int size)
 {
     int cycles = 1; // for the instruction itself
     CacheStats stats;
-    
+
     // check if the instruction causes an miss
     stats = instrCache->read(ip, 1);
     instrProfiler->addToRead(ip, stats.getHits(), stats.getMisses(), stats.getCycles());
@@ -152,7 +152,7 @@ void Part::memWrite(long ip, long addr, int size)
     stats = dataCache->write(addr, 1);
     dataProfiler->addToWrite(ip, stats.getHits(), stats.getMisses(), stats.getCycles());
     cycles += stats.getCycles();
-    
+
     // update statistics
     instrProfiler->addToUsage(ip, 1);
     dataProfiler->addToUsage(ip, 1);
@@ -167,7 +167,7 @@ void Part::instruction(long ip)
     // just keep total instruction counter up to date
     int cycles = 1;
     CacheStats stats;
-    
+
     stats = instrCache->read(ip, 1);
     instrProfiler->addToRead(ip, stats.getHits(), stats.getMisses(), stats.getCycles());
     cycles += stats.getCycles();
@@ -187,11 +187,11 @@ void Part::doReport(ostream &report)
     report << endl;
     report << "Overall Performance Breakdown: " << endl;
     report << "==============================================================================" << endl;
-    report << "  Instruction Execution:     " << setw(10) << (totalInstructions * 1) << " cycles (" << setw(6) << setprecision(2) << showpoint << fixed <<  (totalInstructions/(0.01*totalCycles)) <<  "%)" << endl; 
-    report << "  Data Cache Stalls:         " << setw(10) << dataProfiler->getTotalStallCycles() << " cycles (" << setw(6) << setprecision(2) << showpoint << fixed <<  (dataProfiler->getTotalStallCycles()/(0.01*totalCycles)) <<  "%)" << endl; 
-    report << "  Instruction Cache Stalls:  " << setw(10) << instrProfiler->getTotalStallCycles() << " cycles (" << setw(6) << setprecision(2) << showpoint <<  fixed << (instrProfiler->getTotalStallCycles()/(0.01*totalCycles)) <<  "%)" << endl; 
+    report << "  Instruction Execution:     " << setw(10) << (totalInstructions * 1) << " cycles (" << setw(6) << setprecision(2) << showpoint << fixed <<  (totalInstructions/(0.01*totalCycles)) <<  "%)" << endl;
+    report << "  Data Cache Stalls:         " << setw(10) << dataProfiler->getTotalStallCycles() << " cycles (" << setw(6) << setprecision(2) << showpoint << fixed <<  (dataProfiler->getTotalStallCycles()/(0.01*totalCycles)) <<  "%)" << endl;
+    report << "  Instruction Cache Stalls:  " << setw(10) << instrProfiler->getTotalStallCycles() << " cycles (" << setw(6) << setprecision(2) << showpoint <<  fixed << (instrProfiler->getTotalStallCycles()/(0.01*totalCycles)) <<  "%)" << endl;
     report << " ----------------------------------------------------------------------------" << endl;
-    report << "  Total Execution Time :     " << setw(10) << totalCycles << " cycles (100.00%)" << endl; 
+    report << "  Total Execution Time :     " << setw(10) << totalCycles << " cycles (100.00%)" << endl;
     report << endl ;
     report << endl;
     report << "Data Cache:" << endl;

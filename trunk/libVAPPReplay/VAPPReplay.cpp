@@ -1,6 +1,6 @@
 // -*- c-basic-offset : 4 -*-
 /*
- * Copyright (c) 2009, Antony Gitter, Sven Stork
+ * Copyright (c) 2009, Anthony Gitter, Sven Stork
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -47,6 +47,7 @@ struct mem_stack_t {
         unsigned long VCLK;
         unsigned long MemAddress;
         unsigned long InstrAddress;
+        unsigned int ThreadId;
         bool Write;
     } stack[4];
 };
@@ -57,7 +58,8 @@ static int callback(void *vmem_stack, int argc, char **argv, char **azColName){
       VCLK = 0,
       MemAddress = 1,
       InstrAddress = 2,
-      Write = 3
+      ThreadId = 3,
+      Write = 4
   };
 
 
@@ -66,10 +68,11 @@ static int callback(void *vmem_stack, int argc, char **argv, char **azColName){
       mem_stack->stack[0].VCLK = strtoll(argv[VCLK], NULL, 10);
       mem_stack->stack[0].MemAddress = strtoll(argv[MemAddress], NULL, 10);
       mem_stack->stack[0].InstrAddress = strtoll(argv[InstrAddress], NULL, 10);
+      mem_stack->stack[0].ThreadId = atoi(argv[ThreadId]);
       if ( strtol(argv[Write], NULL, 10)  ) {
           mem_stack->stack[0].Write = true;
       } else {
-          mem_stack->stack[0].Write = false;          
+          mem_stack->stack[0].Write = false;
       }
       mem_stack->count++;
       return 0;
@@ -80,17 +83,18 @@ static int callback(void *vmem_stack, int argc, char **argv, char **azColName){
           mem_stack->stack[count].VCLK = strtoll(argv[VCLK], NULL, 10);
           mem_stack->stack[count].MemAddress = strtoll(argv[MemAddress], NULL, 10);
           mem_stack->stack[count].InstrAddress = strtoll(argv[InstrAddress], NULL, 10);
+          mem_stack->stack[count].ThreadId = atoi(argv[ThreadId]);
           if ( strtol(argv[Write], NULL, 10)  ) {
               mem_stack->stack[count].Write = true;
           } else {
-              mem_stack->stack[count].Write = false;          
+              mem_stack->stack[count].Write = false;
           }
           mem_stack->count++;
           return 0;
       } else {
-          // replay old instruction 
+          // replay old instruction
 
-          for ( list<Executor*>::iterator it = executors.begin() ; 
+          for ( list<Executor*>::iterator it = executors.begin() ;
                 it != executors.end() ;
                 it++ ) {
               Executor *ex = *it;
@@ -101,41 +105,42 @@ static int callback(void *vmem_stack, int argc, char **argv, char **azColName){
                   break;
               case 2:
                   if ( mem_stack->stack[1].Write ) {
-                      ex->memWrite(mem_stack->stack[1].InstrAddress, 
+                      ex->memWrite(mem_stack->stack[1].InstrAddress,
                                    mem_stack->stack[1].MemAddress,
                                    0);
                   } else {
-                      ex->memRead(mem_stack->stack[1].InstrAddress, 
+                      ex->memRead(mem_stack->stack[1].InstrAddress,
                                   mem_stack->stack[1].MemAddress,
                                   0);
                   }
                   break;
               case 3:
-                  ex->memRead(mem_stack->stack[1].InstrAddress, 
+                  ex->memRead(mem_stack->stack[1].InstrAddress,
                               mem_stack->stack[1].MemAddress,
                               mem_stack->stack[2].MemAddress,
                               0);
                   break;
               }
           }
-          
+
           mem_stack->count = 0;
 
           // start adding next instruction to stack
           mem_stack->stack[0].VCLK = strtoll(argv[VCLK], NULL, 10);
           mem_stack->stack[0].MemAddress = strtoll(argv[MemAddress], NULL, 10);
           mem_stack->stack[0].InstrAddress = strtoll(argv[InstrAddress], NULL, 10);
+          mem_stack->stack[0].ThreadId = atoi(argv[ThreadId]);
           if ( strtol(argv[Write], NULL, 10)  ) {
           mem_stack->stack[0].Write = true;
           } else {
-              mem_stack->stack[0].Write = false;          
+              mem_stack->stack[0].Write = false;
           }
           mem_stack->count++;
           return 0;
       }
   }
-  
-  
+
+
   return 0;
 }
 
@@ -147,7 +152,7 @@ bool vappr_init(std::string filename)
         sqlite3_close(db);
         return false;
     }
-    
+
     return true;
 }
 
@@ -158,7 +163,7 @@ bool vappr_finalize()
     db = NULL;
 
     // trigger doReport method
-    for ( list<Executor*>::iterator it = executors.begin() ; 
+    for ( list<Executor*>::iterator it = executors.begin() ;
           it != executors.end() ;
           it++ ) {
         Executor *ex = *it;
@@ -182,13 +187,13 @@ bool vappr_run_memory_accesses()
     if ( db == NULL ) return false;
 
     memset(&mem_stack, 0x0, sizeof(mem_stack_t));
-    
+
     int rc = sqlite3_exec(db, "SELECT * FROM MemoryAccesses", callback, &mem_stack, &zErrMsg);
     if( rc!=SQLITE_OK ){
         fprintf(stderr, "SQL error: %s\n", zErrMsg);
         sqlite3_free(zErrMsg);
         return false;
     }
-    
+
     return true;
 }
