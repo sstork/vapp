@@ -32,7 +32,7 @@
 #define SIZE 32
 
 int main(void){
-  int value;
+  int value = 666;
   int *buffer;
   int i = 0;
 
