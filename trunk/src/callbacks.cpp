@@ -32,127 +32,290 @@
 #include <stdlib.h>
 #include <libgen.h>
 
+
+#include <sstream>
 #include <string>
 #include <iostream>
+#include <list>
 
 using namespace std;
 
 
+class buffer_t
+{
+public:
+    long int vclk;
+    char* base;
+    int size;
+    ADDRINT tid;
+
+    buffer_t(long int vclk, char *base, int size, ADDRINT tid) 
+        : vclk(vclk), base(base), size(size), tid(tid)
+    {}
+    
+    bool contains(void *addr) 
+    {
+        if ( base <= addr && addr < (base+size) ) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    string toString() {
+        stringstream ss;
+        ss << "buffer(" << vclk << "," << (void*)base << "," <<  size << "," << tid << ")";
+        return ss.str();
+    }
+    
+};
+
+
 static long int VCLOCK = 0;
-static vapp_flags_t  VAPPTracing = VAPP_NONE;
-static PIN_LOCK cb_lock;
+static PIN_LOCK vapp_lock;
+static TLS_KEY tls_key;
+static list<buffer_t*> vapp_buffers;
 
-// This function is called for every instruction reads from memory.
-void VAPPMemRead(void *ex, ADDRINT ip, ADDRINT raddr1, UINT32 rsize) {
-    OS_THREAD_ID tid = PIN_GetTid();
+class thread_data_t
+{
+public:
+    pthread_mutex_t *lock;
+    bool inLock;    
+    bool inTryLock;
+    
+    bool inMalloc;
+    int mallocSize;
 
-    if ( VAPPTracing & VAPP_MEM_ACCESS) {
-        db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)ip, (unsigned long int)ip, tid, 0);
-        db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)raddr1, (unsigned long int)ip, tid, 0);
+    volatile bool checkAccess;
+    list<void*> buffers;
+    
+    thread_data_t() :
+        lock(NULL), inLock(false), inTryLock(false),
+        inMalloc(false), mallocSize(0), checkAccess(true)
+    {}
+
+    void enterMalloc(int size) {
+        mallocSize = size;
+        inMalloc = true;
+        checkAccess = false;
     }
 
-    GetLock(&cb_lock, tid+1);
+    void leaveMalloc() {
+        mallocSize = 0;
+        inMalloc = false;
+        checkAccess = true;
+    }
+
+    void enterLock(pthread_mutex_t *l) {
+        lock = l;
+        inLock = true;
+        checkAccess = false;
+    }
+
+    void leaveLock() {
+        inLock = false;;
+        checkAccess = true;
+    }
+
+    void enterUnLock(pthread_mutex_t *l) {
+        lock = l;
+        inLock = true;
+        checkAccess = false;
+    }
+
+    void leaveUnLock() {
+        inLock = false;;
+        checkAccess = true;
+    }
+
+};
+
+
+// function to access thread-specific data
+static thread_data_t* get_tls(THREADID threadid)
+{
+    thread_data_t* tdata = 
+          static_cast<thread_data_t*>(PIN_GetThreadData(tls_key, threadid));
+    return tdata;
+}
+
+
+static void add_new_buffer(void *buf, int size, ADDRINT tid) 
+{
+    GetLock(&vapp_lock, tid+1);
+    buffer_t * b = new buffer_t(VCLOCK, (char*)buf, size, tid);
+    vapp_buffers.push_front(b);
+    
+    for ( list<buffer_t*>::iterator it = vapp_buffers.begin();
+          it != vapp_buffers.end(); it++ ) {
+        cout << (*it)->toString() << endl;
+    }          
+    ReleaseLock(&vapp_lock);
+
+
+}
+
+static void* addr_in_buffer(void *addr, ADDRINT tid)
+{
+    void *buf = NULL;
+    GetLock(&vapp_lock, tid+1);
+    for ( list<buffer_t*>::iterator it = vapp_buffers.begin();
+          it != vapp_buffers.end(); it++ ) {
+        if ( (*it)->contains(addr) ) {
+            buf = (*it)->base;
+        }
+    }          
+    ReleaseLock(&vapp_lock);
+    return buf;
+}
+
+
+static inline long int getClk() {
+    return VCLOCK;
+}
+
+static inline void incrClk() {
+    GetLock(&vapp_lock, -1);
     VCLOCK++;
-    ReleaseLock(&cb_lock);
+    ReleaseLock(&vapp_lock);
 }
 
 
 // This function is called for every instruction reads from memory.
-void VAPPMemRead2(void *ex, ADDRINT ip, ADDRINT raddr1, ADDRINT raddr2, UINT32 rsize) {
-    OS_THREAD_ID tid = PIN_GetTid();
+void VAPPMemRead(void *ex, ADDRINT ip, ADDRINT raddr1, UINT32 rsize, ADDRINT tid) {
+    thread_data_t *tdata = get_tls(tid);
+    //long int vclk = getClk();
 
-    if ( VAPPTracing  & VAPP_MEM_ACCESS ) {
-        db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)ip, (unsigned long int)ip, tid, 0);
-        db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)raddr1, (unsigned long int)ip, tid, 0);
-        db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)raddr2, (unsigned long int)ip, tid, 0);
+    if ( tdata->checkAccess ) {
+        void * base =  addr_in_buffer((void*)raddr1, tid);
+        if ( NULL != base ) {
+            cout << (void*) ip << " MemRead access to " << base << " from thread " << tid << endl;
+        }
     }
 
-    GetLock(&cb_lock, tid+1);
-    VCLOCK++;
-    ReleaseLock(&cb_lock);
+    incrClk();
 }
 
+// This function is called for every instruction reads from memory.
+void VAPPMemRead2(void *ex, ADDRINT ip, ADDRINT raddr1, ADDRINT raddr2, UINT32 rsize, ADDRINT tid) {
+    thread_data_t *tdata = get_tls(tid);
+    //long int vclk = getClk();
+
+    if ( tdata->checkAccess ) {
+        void * base =  addr_in_buffer((void*)raddr1, tid);
+        if ( NULL != base ) {
+            cout << (void*) ip << " MemRead2 access to " << base << " from thread " << tid << endl;
+        }
+        base =  addr_in_buffer((void*)raddr2, tid);
+        if ( NULL != base ) {
+            cout << (void*) ip << " MemRead2 access to " << base << " from thread " << tid << endl;
+        }
+    }
+
+    incrClk();
+}
 
 // This function is called for every instruction write from memory.
-void VAPPMemWrite(void *ex, ADDRINT ip, ADDRINT waddr1, INT32 wsize) {
-    OS_THREAD_ID tid = PIN_GetTid();
+void VAPPMemWrite(void *ex, ADDRINT ip, ADDRINT waddr1, INT32 wsize, ADDRINT tid) {
+    thread_data_t *tdata = get_tls(tid);
 
-    if ( VAPPTracing  & VAPP_MEM_ACCESS  ) {
-        db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)ip, (unsigned long int)ip, tid, 0);
-        db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)waddr1, (unsigned long int)ip, tid, 1);
+    if ( tdata->checkAccess ) {
+        void * base =  addr_in_buffer((void*)waddr1, tid);
+        //long int vclk = getClk();
+        if ( NULL != base ) {
+            cout << (void*) ip << " MemWrite access to " << base << " from thread " << tid << endl;
+            
+        }
     }
-
-    GetLock(&cb_lock, tid+1);
-    VCLOCK++;
-    ReleaseLock(&cb_lock);
+    incrClk();
 }
-
 
 // This function is called for all non memory access instructions.
 // We need this function for a correct instruction cache simulation.
-void VAPPInstruction(void *ex, void *ip) {
-    OS_THREAD_ID tid = PIN_GetTid();
+void VAPPInstruction(void *ex, void *ip, ADDRINT tid) {
+    incrClk();
+}
 
-    if ( VAPPTracing  & VAPP_MEM_ACCESS ) {
-        db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)ip, (unsigned long int)ip, tid, 0);
+void VAPPMallocEnter(RTN rtn, ADDRINT size, ADDRINT tid)
+{
+    //cout << "malloc(" << size << ") @ " << tid << endl;
+    thread_data_t *tdata = get_tls(tid);
+    tdata->enterMalloc(size);
+}
+
+void VAPPMallocLeave(RTN rtn, ADDRINT result, ADDRINT tid)
+{
+    //cout << (void*)result << endl;
+    thread_data_t *tdata = get_tls(tid);
+    if ( result != 0 ) {
+        cout << "malloc(" << tdata->mallocSize << ") = " << (void*)result << " @ " << tid << endl;
+        add_new_buffer((void*)result, tdata->mallocSize, tid);
     }
-    GetLock(&cb_lock, tid+1);
-    VCLOCK++;
-    ReleaseLock(&cb_lock);
+    tdata->leaveMalloc();
 }
 
-
-void VAPPRoutineEnter(RTN rtn)
+void VAPPFree(RTN rtn, ADDRINT buf, ADDRINT tid)
 {
-    if ( VAPPTracing & VAPP_FN_CALL) {
-        db_add_method_call(VCLOCK, RTN_Address(rtn), 1);
-    }
+    
+    //cout << "free(" << (void*)buf << ") @ " << tid  << endl;
 }
 
-void VAPPRoutineLeave(RTN rtn)
+void VAPPLockEnter(RTN rtn, ADDRINT lock, ADDRINT tid) 
 {
-    if ( VAPPTracing & VAPP_FN_CALL) {
-        db_add_method_call(VCLOCK, RTN_Address(rtn), 0);
-    }
+    //cout << "pthread_mutex_lock("  << (void*)lock << ") = @ " << tid << endl;
+    thread_data_t *tdata = get_tls(tid);
+    tdata->enterLock((pthread_mutex_t*)lock);
 }
 
-void VAPPMalloc(RTN rtn, ADDRINT size, ADDRINT *buf)
+void VAPPLockLeave(RTN rtn, ADDRINT result, ADDRINT tid) 
 {
-    if ( VAPPTracing & VAPP_ALLOC_FREE ) {
-        db_add_malloc(VCLOCK, size, (unsigned long int)buf);
-    }
+    //cout << "  leave lock " << result << " @ " << tid << endl;
+    thread_data_t *tdata = get_tls(tid);
+    tdata->leaveLock();
 }
 
-void VAPPFree(RTN rtn, ADDRINT *buf)
+void VAPPTryLockEnter(RTN rtn, ADDRINT lock, ADDRINT tid) 
 {
-    if ( VAPPTracing & VAPP_ALLOC_FREE ) {
-        db_add_free(VCLOCK, (unsigned long int)buf);
-    }
+    //cout << "pthread_mutex_trylock("  << (void*)lock << ") = @ " << tid << endl;
 }
 
-
-void VAPPControlTraceOn(RTN rtn, ADDRINT param0)
+void VAPPTryLockLeave(RTN rtn, ADDRINT result, ADDRINT tid) 
 {
-    GetLock(&cb_lock, PIN_GetTid()+1);
-
-    VAPPTracing = (vapp_flags_t)(VAPPTracing | param0);
-
-    ReleaseLock(&cb_lock);
+    //cout << "   " << result << " @ " << tid << endl;
 }
 
-
-void VAPPControlTraceOff(RTN rtn, ADDRINT param0)
+void VAPPUnLockEnter(RTN rtn, ADDRINT lock, ADDRINT tid) 
 {
-    GetLock(&cb_lock, PIN_GetTid()+1);
-
-    VAPPTracing = (vapp_flags_t)(VAPPTracing & (~(param0)));
-
-    ReleaseLock(&cb_lock);
+    //cout << "pthread_mutex_unlock("  << (void*)lock << ") = @ " << tid << endl;
+    thread_data_t *tdata = get_tls(tid);
+    tdata->enterUnLock((pthread_mutex_t*)lock);
 }
 
-void cb_init()
+void VAPPUnLockLeave(RTN rtn, ADDRINT result, ADDRINT tid) 
 {
-    // Initialize the pin lock
-    InitLock(&cb_lock);
+    //cout << "   " << result << " @ " << tid << endl;
+    thread_data_t *tdata = get_tls(tid);
+    tdata->leaveLock();
 }
 
+void VAPPThreadStart(THREADID threadid, CONTEXT *ctxt, INT32 flags, VOID *v)
+{
+    //cout << "start thread " << threadid << endl;
+    thread_data_t *tdata = new thread_data_t;
+    PIN_SetThreadData(tls_key, tdata, threadid);
+}
+
+void VAPPThreadStop(THREADID threadid, const CONTEXT *ctxt, INT32 flags, VOID *v)
+{
+    //cout << "stop thread " << threadid << endl;
+    thread_data_t *tdata = get_tls(threadid);
+    delete tdata;
+}
+
+void VAPPInit() {
+    cout << "init " << endl;
+    InitLock(&vapp_lock);
+
+    // Obtain  a key for TLS storage.
+    tls_key = PIN_CreateThreadDataKey(0);
+}
