@@ -58,10 +58,6 @@ void VAPPLockEnter(RTN rtn, ADDRINT lock,  ADDRINT tid);
 
 void VAPPLockLeave(RTN rtn, ADDRINT result, ADDRINT tid);
 
-void VAPPTryLockEnter(RTN rtn, ADDRINT lock,  ADDRINT tid);
-
-void VAPPTryLockLeave(RTN rtn, ADDRINT result, ADDRINT tid);
-
 void VAPPUnLockEnter(RTN rtn, ADDRINT lock,  ADDRINT tid);
 
 void VAPPUnLockLeave(RTN rtn, ADDRINT result, ADDRINT tid);

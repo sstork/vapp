@@ -64,7 +64,7 @@ void VAPPInstrumentInstruction(INS ins, VOID *v)
                                IARG_MEMORYREAD2_EA,
                                IARG_UINT32, size, // IARG_MEMORYREAD_SIZE
                                IARG_THREAD_ID,
-                                IARG_END);
+                               IARG_END);
     } else {
       INS_InsertPredicatedCall(ins,
                                IPOINT_BEFORE,
@@ -74,7 +74,7 @@ void VAPPInstrumentInstruction(INS ins, VOID *v)
                                IARG_MEMORYREAD_EA,
                                IARG_UINT32, size, // IARG_MEMORYREAD_SIZE
                                IARG_THREAD_ID,
-                                IARG_END);
+                               IARG_END);
     }
   } else if (INS_IsMemoryWrite(ins)){
     UINT32 size = INS_MemoryWriteSize(ins);
@@ -86,7 +86,7 @@ void VAPPInstrumentInstruction(INS ins, VOID *v)
                              IARG_MEMORYWRITE_EA,
                              IARG_UINT32, size, // IARG_MEMORYWRITE_SIZE
                              IARG_THREAD_ID,
-                              IARG_END);
+                             IARG_END);
   } else {
     INS_InsertCall(ins,
                    IPOINT_BEFORE,
@@ -96,7 +96,6 @@ void VAPPInstrumentInstruction(INS ins, VOID *v)
                    IARG_THREAD_ID,
                    IARG_END);
   }
-
 }
 
 VOID VAPPInstrumentImage(IMG img, VOID *v)
@@ -151,26 +150,6 @@ VOID VAPPInstrumentImage(IMG img, VOID *v)
         RTN_InsertCall(rtn,
                        IPOINT_AFTER,
                        (AFUNPTR)VAPPLockLeave,
-                       IARG_PTR, rtn,
-                       IARG_FUNCRET_EXITPOINT_VALUE,
-                       IARG_THREAD_ID,
-                       IARG_END);
-        RTN_Close(rtn);
-    }
-
-    rtn =  RTN_FindByName(img, "pthread_mutex_trylock");
-    if ( RTN_Valid(rtn) ) {
-        RTN_Open(rtn);
-        RTN_InsertCall(rtn,
-                       IPOINT_BEFORE,
-                       (AFUNPTR)VAPPTryLockEnter,
-                       IARG_PTR, rtn,
-                       IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
-                       IARG_THREAD_ID,
-                       IARG_END);
-        RTN_InsertCall(rtn,
-                       IPOINT_AFTER,
-                       (AFUNPTR)VAPPTryLockLeave,
                        IARG_PTR, rtn,
                        IARG_FUNCRET_EXITPOINT_VALUE,
                        IARG_THREAD_ID,
