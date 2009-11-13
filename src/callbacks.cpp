@@ -155,13 +155,7 @@ static void add_new_buffer(void *buf, int size, ADDRINT tid)
     buffer_t * b = new buffer_t(VCLOCK, (char*)buf, size, tid);
     vapp_buffers.push_front(b);
     
-    for ( list<buffer_t*>::iterator it = vapp_buffers.begin();
-          it != vapp_buffers.end(); it++ ) {
-        cout << (*it)->toString() << endl;
-    }          
     ReleaseLock(&vapp_lock);
-
-
 }
 
 static void* addr_in_buffer(void *addr, ADDRINT tid)
@@ -259,7 +253,7 @@ void VAPPMallocLeave(RTN rtn, ADDRINT result, ADDRINT tid)
     //cout << (void*)result << endl;
     thread_data_t *tdata = get_tls(tid);
     if ( result != 0 ) {
-        cout << "malloc(" << tdata->mallocSize << ") = " << (void*)result << " @ " << tid << endl;
+        //cout << "malloc(" << tdata->mallocSize << ") = " << (void*)result << " @ " << tid << endl;
         add_new_buffer((void*)result, tdata->mallocSize, tid);
         db_add_malloc(getClk(), tdata->mallocSize, result, tid);
     }
@@ -325,7 +319,6 @@ void VAPPThreadStop(THREADID threadid, const CONTEXT *ctxt, INT32 flags, VOID *v
 }
 
 void VAPPInit() {
-    cout << "init " << endl;
     InitLock(&vapp_lock);
 
     // Obtain  a key for TLS storage.
