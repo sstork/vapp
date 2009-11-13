@@ -31,6 +31,7 @@
 #include "pin.H"
 
 #include <string>
+#include <set>
 
 // This function must be called before any other function can be called
 void db_init(std::string name);
@@ -42,13 +43,17 @@ void db_add_image(int id, std::string name);
 
 void db_add_method(std::string name, int image_id, unsigned long int start, unsigned long int end);
 
-void db_add_method_call(unsigned long int vclk, unsigned long int start, char enter);
+void db_add_malloc(unsigned long int vclk, int size, unsigned long int address, long int tid);
 
-void db_add_mem_access(unsigned long int vclk, unsigned long int MemAddr, unsigned long int InstrAddr, OS_THREAD_ID tid, char Write);
+void db_add_free(unsigned long int vclk, unsigned long int address, long int tid);
 
-void db_add_malloc(unsigned long int vclk, int size, unsigned long int address);
+void db_add_lock(unsigned long int vclk, unsigned long int base, long int tid);
 
-void db_add_free(unsigned long int vclk, unsigned long int address);
+void db_add_unlock(unsigned long int vclk, unsigned long int base, long int tid);
+
+void db_add_thread(unsigned long int start, unsigned long int end, long int tid);
+
+void db_add_access(unsigned long int start, unsigned long int end, long int tid, std::set<long int> &buffers);
 
 
 #endif // DATABASE_H

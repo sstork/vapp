@@ -42,7 +42,6 @@ static list<string> db_buf;
 static PIN_LOCK db_lock;  // sqlite db can only be used by one thread at a time
 
 
-
 // This function is always inside the critical section.  It is assumed that
 // the calling thread already has the db_lock
 static void db_exec_direct(string cmd)
@@ -53,7 +52,6 @@ static void db_exec_direct(string cmd)
         exit(1);
     }
 }
-
 
 static inline void db_exec(string cmd)
 {
@@ -73,12 +71,10 @@ static inline void db_exec(string cmd)
     ReleaseLock(&db_lock);
 }
 
-
 void db_init(std::string name)
 {
     // Initialize the pin lock
     InitLock(&db_lock);
-
 
     // No need to lock this code.  It executes before the call to PIN_StartProgram()
     // and is therefore single-threaded
@@ -96,26 +92,25 @@ void db_init(std::string name)
     db_exec_direct("PRAGMA synchronous=OFF");
     db_exec_direct("PRAGMA cache_size=50000");
 
-    // create image tables
-    db_exec_direct("CREATE TABLE Images (Id int, ImgName varchar(64))");
-
-    // create methods tables
-    db_exec_direct("CREATE TABLE Methods (MethName varchar(64), ImgId int, MethStart big int , MethEnd big int)");
-
-    // create image tables
-    db_exec_direct("CREATE TABLE Calls (VCLK big int, Method big int, Enter tiny int)");
-
-    // create image tables
-    db_exec_direct("CREATE TABLE MemoryAccesses (VCLK big int, MemAddress big int, InstrAddress big int, ThreadId int, Write tiny int)");
-
     // create Malloc tables
-    db_exec_direct("CREATE TABLE Mallocs (VCLK big int, Size int, Address big int)");
+    db_exec_direct("CREATE TABLE Mallocs (VCLK big int, Size int, Base big int, TID big int)");
 
     // create Free tables
-    db_exec_direct("CREATE TABLE Frees (VCLK big int, Address big int)");
+    db_exec_direct("CREATE TABLE Frees (VCLK big int, Base big int, TID big int)");
+
+    // create Lock tables
+    db_exec_direct("CREATE TABLE Locks (VCLK big int, Lock big int, TID big int)");
+
+    // create UnLock tables
+    db_exec_direct("CREATE TABLE UnLocks (VCLK big int, Lock big int, TID big int)");
+
+    // create Access tables
+    db_exec_direct("CREATE TABLE Accesses (Start big int, End big int, TID big int, Buffer big int)");
+
+    // create Thread tables
+    db_exec_direct("CREATE TABLE Threads (Start big int, End big int, TID big int)");
 
 }
-
 
 void db_finalize()
 {
@@ -137,51 +132,47 @@ void db_finalize()
     ReleaseLock(&db_lock);
 }
 
-
-
-void db_add_image(int id, string name)
+void db_add_malloc(unsigned long int vclk, int size, unsigned long int base, long int tid)
 {
     stringstream ss;
-    ss << "INSERT INTO Images VALUES(";
-    ss << id << ",\"" << name << "\")";
+    ss << "INSERT INTO Mallocs VALUES(" << vclk << "," << size << "," << base << "," << tid << ")";
     db_exec(ss.str());
 }
 
-void db_add_method(std::string name , int image_id, unsigned long int start, unsigned long int end)
+void db_add_free(unsigned long int vclk, unsigned long int base, long int tid)
 {
     stringstream ss;
-    ss << "INSERT INTO Methods VALUES(";
-    ss << "\"" << name << "\"," ;
-    ss << image_id << "," << start << "," << end << ")";
+    ss << "INSERT INTO Frees VALUES(" << vclk << "," << base << "," << tid << ")";
     db_exec(ss.str());
 }
 
-void db_add_method_call(unsigned long int vclk, unsigned long int start, char enter)
+void db_add_lock(unsigned long int vclk, unsigned long int base, long int tid)
 {
     stringstream ss;
-    ss << "INSERT INTO Calls VALUES(" << vclk << "," << start << "," << (int)enter << ")";
+    ss << "INSERT INTO Locks VALUES(" << vclk << "," <<base << "," << tid << ")";
     db_exec(ss.str());
 }
 
-
-void db_add_mem_access(unsigned long int vclk, unsigned long int MemAddr, unsigned long int InstrAddr, OS_THREAD_ID tid, char Write)
+void db_add_unlock(unsigned long int vclk, unsigned long int base, long int tid)
 {
     stringstream ss;
-    ss << "INSERT INTO MemoryAccesses VALUES(" << vclk << "," << MemAddr << "," << InstrAddr << ", " << tid << "," << (int)Write << ")";
+    ss << "INSERT INTO UnLocks VALUES(" << vclk << "," <<base << "," << tid << ")";
     db_exec(ss.str());
 }
 
-
-void db_add_malloc(unsigned long int vclk, int size, unsigned long int address)
+void db_add_thread(unsigned long int start, unsigned long int end, long int tid)
 {
     stringstream ss;
-    ss << "INSERT INTO Mallocs VALUES(" << vclk << "," << size << "," << address << ")";
+    ss << "INSERT INTO Threads VALUES(" << start << "," << end << "," << tid << ")" ;
     db_exec(ss.str());
 }
 
-void db_add_free(unsigned long int vclk, unsigned long int address)
+void db_add_access(unsigned long int start, unsigned long int end, long int tid, set<long int> &buffers)
 {
-    stringstream ss;
-    ss << "INSERT INTO Frees VALUES(" << vclk << "," << address << ")";
-    db_exec(ss.str());
+    for ( set<long int>::iterator it = buffers.begin() ; it != buffers.end() ; it++ ) {
+        stringstream ss;
+        ss << "INSERT INTO Accesses VALUES(" << start << "," << end << "," << tid << "," << (*it) << ")";
+        db_exec(ss.str());
+    }    
 }
+

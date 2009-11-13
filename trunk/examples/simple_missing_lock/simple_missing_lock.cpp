@@ -21,6 +21,8 @@ void* run(void *v) {
     cnt->value++;
     pthread_mutex_unlock(&cnt->lock);
 
+    cout << "thread: counter = " << cnt->value << endl;
+
     return NULL;
 }
 
@@ -36,6 +38,7 @@ counter_t* new_counter() {
 int main (void) {
     pthread_t t;
     counter_t *cnt = new_counter();
+    counter_t *cnt2 = new_counter();
 
     pthread_create(&t, NULL, run, cnt);
 
@@ -44,6 +47,8 @@ int main (void) {
     pthread_join(t, NULL);
 
     cout << "counter = " << cnt->value << endl;
+
+    free(cnt);
 
     return 0;
 }
