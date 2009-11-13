@@ -49,7 +49,6 @@ KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE,         "pintool", "output",   
 static map<string, int> image_map;
 
 
-
 // Pin calls this function every time a new instruction is encountered
 void VAPPInstrumentInstruction(INS ins, VOID *v)
 {
@@ -64,7 +63,8 @@ void VAPPInstrumentInstruction(INS ins, VOID *v)
                                IARG_MEMORYREAD_EA,
                                IARG_MEMORYREAD2_EA,
                                IARG_UINT32, size, // IARG_MEMORYREAD_SIZE
-                               IARG_END);
+                               IARG_THREAD_ID,
+                                IARG_END);
     } else {
       INS_InsertPredicatedCall(ins,
                                IPOINT_BEFORE,
@@ -73,7 +73,8 @@ void VAPPInstrumentInstruction(INS ins, VOID *v)
                                IARG_INST_PTR,
                                IARG_MEMORYREAD_EA,
                                IARG_UINT32, size, // IARG_MEMORYREAD_SIZE
-                               IARG_END);
+                               IARG_THREAD_ID,
+                                IARG_END);
     }
   } else if (INS_IsMemoryWrite(ins)){
     UINT32 size = INS_MemoryWriteSize(ins);
@@ -84,106 +85,117 @@ void VAPPInstrumentInstruction(INS ins, VOID *v)
                              IARG_INST_PTR,
                              IARG_MEMORYWRITE_EA,
                              IARG_UINT32, size, // IARG_MEMORYWRITE_SIZE
-                             IARG_END);
+                             IARG_THREAD_ID,
+                              IARG_END);
   } else {
     INS_InsertCall(ins,
                    IPOINT_BEFORE,
                    (AFUNPTR)VAPPInstruction,
                    IARG_PTR, v,
                    IARG_INST_PTR,
+                   IARG_THREAD_ID,
                    IARG_END);
   }
 
 }
 
-VOID VAPPInstrumentRoutine(RTN rtn, VOID *v)
-{
-    // add method to database
-    string img_name = basename((char*)IMG_Name(SEC_Img(RTN_Sec(rtn))).c_str());
-    if ( image_map[img_name] == 0 ) {
-        image_map[img_name] = IMG_Id(SEC_Img(RTN_Sec(rtn)));
-        db_add_image(image_map[img_name], img_name);
-    }
-    int img_id = image_map[img_name];
-    string name = RTN_Name(rtn);
-    unsigned long int start =  RTN_Address(rtn);
-    unsigned long int end = start +  RTN_Size(rtn);
-
-    db_add_method(name, img_id, start, end);
-
-
-    RTN_Open(rtn);
-    // callback before we call function
-    RTN_InsertCall(rtn,
-                   IPOINT_BEFORE,
-                   (AFUNPTR)VAPPRoutineEnter,
-                   IARG_PTR, rtn,
-                   IARG_END);
-    // callback after we returned from call
-    RTN_InsertCall(rtn,
-                   IPOINT_AFTER,
-                   (AFUNPTR)VAPPRoutineLeave,
-                   IARG_PTR, rtn,
-                   IARG_END);
-    RTN_Close(rtn);
-}
-
-
-
 VOID VAPPInstrumentImage(IMG img, VOID *v)
 {
-    RTN rtn =  RTN_FindByName(img, "VAPPTraceOn");
-    // 'redirect' calls from control library
-    if ( RTN_Valid(rtn) ) {
-            RTN_Open(rtn);
-            // callback after we returned from call
-            RTN_InsertCall(rtn,
-                           IPOINT_AFTER,
-                           (AFUNPTR)VAPPControlTraceOn,
-                           IARG_PTR, rtn,
-                           IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
-                           IARG_END);
-            RTN_Close(rtn);
-    }
-
-    rtn =  RTN_FindByName(img, "VAPPTraceOff");
-    if ( RTN_Valid(rtn) ) {
-            RTN_Open(rtn);
-            // callback after we returned from call
-            RTN_InsertCall(rtn,
-                           IPOINT_BEFORE,
-                           (AFUNPTR)VAPPControlTraceOff,
-                           IARG_PTR, rtn,
-                           IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
-                           IARG_END);
-            RTN_Close(rtn);
-    }
+    RTN rtn;
 
     rtn =  RTN_FindByName(img, "malloc");
     if ( RTN_Valid(rtn) ) {
-            RTN_Open(rtn);
-            // callback after we returned from call
-            RTN_InsertCall(rtn,
-                           IPOINT_AFTER,
-                           (AFUNPTR)VAPPMalloc,
-                           IARG_PTR, rtn,
-                           IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
-                           IARG_FUNCRET_EXITPOINT_VALUE,
-                           IARG_END);
-            RTN_Close(rtn);
+        RTN_Open(rtn);
+        // callback after we returned from call
+        RTN_InsertCall(rtn,
+                       IPOINT_BEFORE,
+                       (AFUNPTR)VAPPMallocEnter,
+                       IARG_PTR, rtn,
+                       IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
+                       IARG_THREAD_ID,
+                       IARG_END);
+        RTN_InsertCall(rtn,
+                       IPOINT_AFTER,
+                       (AFUNPTR)VAPPMallocLeave,
+                       IARG_PTR, rtn,
+                       IARG_FUNCRET_EXITPOINT_VALUE,
+                       IARG_THREAD_ID,
+                       IARG_END);
+        RTN_Close(rtn);
     }
 
     rtn =  RTN_FindByName(img, "free");
     if ( RTN_Valid(rtn) ) {
-            RTN_Open(rtn);
-            // callback after we returned from call
-            RTN_InsertCall(rtn,
-                           IPOINT_BEFORE,
-                           (AFUNPTR)VAPPFree,
-                           IARG_PTR, rtn,
-                           IARG_FUNCARG_ENTRYPOINT_REFERENCE, 0,
-                           IARG_END);
-            RTN_Close(rtn);
+        RTN_Open(rtn);
+        // callback after we returned from call
+        RTN_InsertCall(rtn,
+                       IPOINT_BEFORE,
+                       (AFUNPTR)VAPPFree,
+                       IARG_PTR, rtn,
+                       IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
+                       IARG_END);
+        RTN_Close(rtn);
+    }
+    
+
+    rtn =  RTN_FindByName(img, "pthread_mutex_lock");
+    if ( RTN_Valid(rtn) ) {
+        RTN_Open(rtn);
+        RTN_InsertCall(rtn,
+                       IPOINT_BEFORE,
+                       (AFUNPTR)VAPPLockEnter,
+                       IARG_PTR, rtn,
+                       IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
+                       IARG_THREAD_ID,
+                       IARG_END);
+        RTN_InsertCall(rtn,
+                       IPOINT_AFTER,
+                       (AFUNPTR)VAPPLockLeave,
+                       IARG_PTR, rtn,
+                       IARG_FUNCRET_EXITPOINT_VALUE,
+                       IARG_THREAD_ID,
+                       IARG_END);
+        RTN_Close(rtn);
+    }
+
+    rtn =  RTN_FindByName(img, "pthread_mutex_trylock");
+    if ( RTN_Valid(rtn) ) {
+        RTN_Open(rtn);
+        RTN_InsertCall(rtn,
+                       IPOINT_BEFORE,
+                       (AFUNPTR)VAPPTryLockEnter,
+                       IARG_PTR, rtn,
+                       IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
+                       IARG_THREAD_ID,
+                       IARG_END);
+        RTN_InsertCall(rtn,
+                       IPOINT_AFTER,
+                       (AFUNPTR)VAPPTryLockLeave,
+                       IARG_PTR, rtn,
+                       IARG_FUNCRET_EXITPOINT_VALUE,
+                       IARG_THREAD_ID,
+                       IARG_END);
+        RTN_Close(rtn);
+    }
+
+    rtn =  RTN_FindByName(img, "pthread_mutex_unlock");
+    if ( RTN_Valid(rtn) ) {
+        RTN_Open(rtn);
+        RTN_InsertCall(rtn,
+                       IPOINT_BEFORE,
+                       (AFUNPTR)VAPPUnLockEnter,
+                       IARG_PTR, rtn,
+                       IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
+                       IARG_THREAD_ID,
+                       IARG_END);
+        RTN_InsertCall(rtn,
+                       IPOINT_AFTER,
+                       (AFUNPTR)VAPPUnLockLeave,
+                       IARG_PTR, rtn,
+                       IARG_FUNCRET_EXITPOINT_VALUE,
+                       IARG_THREAD_ID,
+                       IARG_END);
+        RTN_Close(rtn);
     }
 }
 
@@ -193,7 +205,6 @@ void VAPPFini(INT32 code, VOID *v)
     // Shutdown database
     db_finalize();
 }
-
 
 int main(int argc, char *argv[])
 {
@@ -206,19 +217,21 @@ int main(int argc, char *argv[])
 
     // Initialize database and callback functions
     db_init(KnobOutputFile.Value());
-    cb_init();
 
     // Register Image to be called to instrument functions.
     IMG_AddInstrumentFunction(VAPPInstrumentImage, 0);
-
-    // Register Routine to be called to instrument rtn
-    RTN_AddInstrumentFunction(VAPPInstrumentRoutine, 0);
 
     // Register scs_nstruction to be called to instrument instructions
     INS_AddInstrumentFunction(VAPPInstrumentInstruction, NULL);
 
     // Register scs_fini to be called when the application exits
     PIN_AddFiniFunction(VAPPFini, NULL);
+
+    // Register thread functions
+    PIN_AddThreadStartFunction(VAPPThreadStart, 0);
+    PIN_AddThreadFiniFunction(VAPPThreadStop, 0);
+
+    VAPPInit();
 
     // Start the program, never returns
     PIN_StartProgram();
