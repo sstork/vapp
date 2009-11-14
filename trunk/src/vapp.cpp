@@ -132,6 +132,7 @@ VOID VAPPInstrumentImage(IMG img, VOID *v)
                        (AFUNPTR)VAPPFree,
                        IARG_PTR, rtn,
                        IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
+                       IARG_THREAD_ID,
                        IARG_END);
         RTN_Close(rtn);
     }
