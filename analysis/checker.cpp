@@ -7,7 +7,7 @@
 using namespace std;
 
 int main(int argc, char *argv[]) {
-    
+
     Analysis *checker = NULL;
 
     if ( argc != 2 ) {
@@ -16,6 +16,12 @@ int main(int argc, char *argv[]) {
     }
 
     checker = new Analysis(argv[1]);
+
+    checker->calcBufferStats();
+    checker->reportUnaccessed();
+    checker->reportUnshared();
+    checker->reportUnprotected();
+    checker->reportUnfreed();
 
     delete checker;
 }

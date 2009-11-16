@@ -31,7 +31,6 @@ int main (void) {
 
     free(a);
     free(c);
-    free(d);
 
     return 0;
 }
