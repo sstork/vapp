@@ -162,35 +162,6 @@ void Analysis::calcBufferStats(){
         allLocks.insert((*it)->getBase());
     }
 
-// Test lockset
-/*
-    cout << "Distinct locks: " << allLocks.size() << endl;
-    for(set<long long>::iterator it = allLocks.begin(); it != allLocks.end(); it++) {
-        cout << (*it) << endl;
-    }
-
-    set<long long> def;
-    def.insert(1);
-    def.insert(2);
-    def.insert(3);
-    Buffer *b1 = new Buffer(1, 1, def);
-    Buffer *b2 = new Buffer(2, 2, def);
-
-    set<long long> test;
-    test.insert(2);
-    test.insert(1);
-    cout << b1->toString() << endl;
-    b1->updateLockset(test);
-    cout << b1->toString() << endl;
-    b1->setEnd(20000);
-    cout << b1->toString() << endl;
-
-    test.clear();
-    b2->updateLockset(test);
-    cout << b2->toString() << endl;
-*/
-
-
     // Create a lockset for each buffer allocated
     for(list<MethodCall*>::iterator it = (&this->mallocs)->begin(); it != (&this->mallocs)->end(); it++) {
         Buffer *b = new Buffer((*it)->getVClk(), (*it)->getBase(), allLocks);
@@ -223,14 +194,6 @@ void Analysis::calcBufferStats(){
 
         mostRecent->setEnd(vclk);
     }
-
-/*
-    for(list<Buffer*>::iterator itBuf = (&this->buffers)->begin();
-        itBuf != (&this->buffers)->end(); itBuf++) {
-        cout << (*itBuf)->longToString() << endl;
-    }
-*/
-
 
     // Step through the execution (accesses)
     for(list<Access*>::iterator it = (&this->accesses)->begin();
@@ -265,13 +228,6 @@ void Analysis::calcBufferStats(){
             }
         }
     }
-
-/*
-    for(list<Buffer*>::iterator itBuf = (&this->buffers)->begin();
-        itBuf != (&this->buffers)->end(); itBuf++) {
-        cout << (*itBuf)->longToString() << endl;
-    }
-*/
 }
 
 // Display those Buffers that are never accessed during program execution
