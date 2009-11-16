@@ -6,6 +6,7 @@
 #include <sstream>
 #include <string>
 #include <list>
+#include <algorithm>
 #include <set>
 #include "limits.h"
 
@@ -97,8 +98,8 @@ class Buffer {
     void updateLockset(std::set<long long> heldLocks) {
         std::set<long long> result;
         set_intersection(lockset.begin(), lockset.end(),
-            heldLocks.begin(), heldLocks.end(),
-            inserter(result, result.begin()));
+                         heldLocks.begin(), heldLocks.end(),
+                         inserter(result, result.begin()));
 
         setLockset(result);
     }
