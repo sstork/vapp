@@ -44,7 +44,7 @@ void work()
 
     printf("Working\n");
 
-    for ( i = 0 ; i < SIZE*SIZE ;  ) {
+    for ( i = 0 ; i < SIZE*SIZE ; i++ ) {
         buffer[i] = value;
     }
 

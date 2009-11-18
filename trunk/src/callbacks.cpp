@@ -81,6 +81,7 @@ class thread_data_t
 {
 public:
     long int start;
+    long int id;
 
     pthread_mutex_t *lock;
     bool inLock;    
@@ -94,8 +95,8 @@ public:
     set<long int> buffers;
 
     
-    thread_data_t(long int start) :
-        start(start),lock(NULL), inLock(false), inTryLock(false),
+    thread_data_t(long int start, long int id) :
+        start(start),id(id), lock(NULL), inLock(false), inTryLock(false),
         inMalloc(false), mallocSize(0), checkAccess(true), epoch_start(start)
     {}
 
@@ -140,6 +141,7 @@ public:
 
 };
 
+static list<thread_data_t*> threads;
 
 // function to access thread-specific data
 static thread_data_t* get_tls(THREADID threadid)
@@ -303,8 +305,12 @@ void VAPPUnLockLeave(RTN rtn, ADDRINT result, ADDRINT tid)
 void VAPPThreadStart(THREADID threadid, CONTEXT *ctxt, INT32 flags, VOID *v)
 {
     //cout << "start thread " << threadid << endl;
-    thread_data_t *tdata = new thread_data_t(getClk());
+    thread_data_t *tdata = new thread_data_t(getClk(), threadid);
     PIN_SetThreadData(tls_key, tdata, threadid);
+
+    GetLock(&vapp_lock, threadid+1);
+    threads.push_front(tdata);
+    ReleaseLock(&vapp_lock);
 }
 
 void VAPPThreadStop(THREADID threadid, const CONTEXT *ctxt, INT32 flags, VOID *v)
@@ -314,7 +320,11 @@ void VAPPThreadStop(THREADID threadid, const CONTEXT *ctxt, INT32 flags, VOID *v
 
     db_add_access(tdata->epoch_start, getClk(), threadid, tdata->buffers);
     db_add_thread(tdata->start, getClk(), threadid);
-   
+ 
+    GetLock(&vapp_lock, threadid+1);
+    threads.remove(tdata);
+    ReleaseLock(&vapp_lock);
+  
     delete tdata;
 }
 
@@ -323,4 +333,13 @@ void VAPPInit() {
 
     // Obtain  a key for TLS storage.
     tls_key = PIN_CreateThreadDataKey(0);
+}
+
+void VAPPFinalize() 
+{
+    for ( list<thread_data_t*>::iterator it = threads.begin() ; it != threads.end(); it++ ) {
+        thread_data_t *tdata = *it;
+        db_add_access(tdata->epoch_start, getClk(), tdata->id, tdata->buffers);
+        db_add_thread(tdata->start, getClk(), tdata->id);
+    }
 }

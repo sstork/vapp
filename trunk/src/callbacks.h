@@ -68,4 +68,6 @@ void VAPPThreadStop(THREADID threadid, const CONTEXT *ctxt, INT32 flags, VOID *v
 
 void VAPPInit();
 
+void VAPPFinalize();
+
 #endif //

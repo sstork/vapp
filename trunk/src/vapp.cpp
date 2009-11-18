@@ -158,6 +158,27 @@ VOID VAPPInstrumentImage(IMG img, VOID *v)
         RTN_Close(rtn);
     }
 
+    rtn =  RTN_FindByName(img, "GOMP_critical_start");
+    if ( RTN_Valid(rtn) ) {
+        RTN_Open(rtn);
+        RTN_InsertCall(rtn,
+                       IPOINT_BEFORE,
+                       (AFUNPTR)VAPPLockEnter,
+                       IARG_PTR, rtn,
+                       IARG_ADDRINT, 666,
+                       IARG_THREAD_ID,
+                       IARG_END);
+        RTN_InsertCall(rtn,
+                       IPOINT_AFTER,
+                       (AFUNPTR)VAPPLockLeave,
+                       IARG_PTR, rtn,
+                       IARG_FUNCRET_EXITPOINT_VALUE,
+                       IARG_THREAD_ID,
+                       IARG_END);
+        RTN_Close(rtn);
+    }
+
+
     rtn =  RTN_FindByName(img, "pthread_mutex_unlock");
     if ( RTN_Valid(rtn) ) {
         RTN_Open(rtn);
@@ -177,11 +198,33 @@ VOID VAPPInstrumentImage(IMG img, VOID *v)
                        IARG_END);
         RTN_Close(rtn);
     }
+
+    rtn =  RTN_FindByName(img, "GOMP_critical_end");
+    if ( RTN_Valid(rtn) ) {
+        RTN_Open(rtn);
+        RTN_InsertCall(rtn,
+                       IPOINT_BEFORE,
+                       (AFUNPTR)VAPPUnLockEnter,
+                       IARG_PTR, rtn,
+                       IARG_ADDRINT, 666,
+                       IARG_THREAD_ID,
+                       IARG_END);
+        RTN_InsertCall(rtn,
+                       IPOINT_AFTER,
+                       (AFUNPTR)VAPPUnLockLeave,
+                       IARG_PTR, rtn,
+                       IARG_FUNCRET_EXITPOINT_VALUE,
+                       IARG_THREAD_ID,
+                       IARG_END);
+        RTN_Close(rtn);
+    }
+
 }
 
 // This function is called when the application exits
 void VAPPFini(INT32 code, VOID *v)
 {
+    VAPPFinalize();
     // Shutdown database
     db_finalize();
 }
@@ -210,7 +253,7 @@ int main(int argc, char *argv[])
     // Register thread functions
     PIN_AddThreadStartFunction(VAPPThreadStart, 0);
     PIN_AddThreadFiniFunction(VAPPThreadStop, 0);
-
+    
     VAPPInit();
 
     // Start the program, never returns
