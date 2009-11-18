@@ -12,7 +12,7 @@ int main(void)
 #pragma omp parallel for 
     for ( int i = 0 ; i < 100  ; i++ )  {
         if ( i % value == 0) {
-            //#pragma omp critical 
+            #pragma omp critical 
             {
                 if ( *result < i ) {
                     *result = i;

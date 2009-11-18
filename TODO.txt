@@ -23,10 +23,11 @@
     - analysis (limitations)
       - heuristics : first multithreaded access 
   - surprises/lessons learned
-    - log size explosion 
-    - low performance of database 
+    - log size explosion
+    - low performance of database
     - shortcomings in analysis 
     - crappy STL library
+    - hard/expesive to simluate hardware
   - future work 
     - deterministic replay via locking order
     - extract NUMA related information 
