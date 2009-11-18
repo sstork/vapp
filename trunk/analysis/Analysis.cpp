@@ -65,7 +65,6 @@ static int access_cb(void *accessDB, int argc, char **argv, char **azColName){
     return 0;
 }
 
-
 Analysis::Analysis(std::string filename)
     : filename(filename)
 {
