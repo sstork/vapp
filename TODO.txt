@@ -29,6 +29,8 @@
     - crappy STL library
   - future work 
     - deterministic replay via locking order
+    - extract NUMA related information 
+    - lock contention information
   - conclusions
 
 - poster
