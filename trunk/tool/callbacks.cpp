@@ -41,6 +41,7 @@
 
 using namespace std;
 
+static vapp_flags_t  VAPPTracing = VAPP_ALL;
 
 class buffer_t
 {
@@ -68,7 +69,6 @@ public:
         ss << "buffer(" << vclk << "," << (void*)base << "," <<  size << "," << tid << ")";
         return ss.str();
     }
-    
 };
 
 
@@ -187,14 +187,15 @@ static inline void incrClk() {
 
 // This function is called for every instruction reads from memory.
 void VAPPMemRead(void *ex, ADDRINT ip, ADDRINT raddr1, UINT32 rsize, ADDRINT tid) {
-    thread_data_t *tdata = get_tls(tid);
-    //long int vclk = getClk();
-
-    if ( tdata->checkAccess ) {
-        void * base =  addr_in_buffer((void*)raddr1, tid);
-        if ( NULL != base ) {
-            //cout << (void*) ip << " MemRead access to " << base << " from thread " << tid << endl;
-            tdata->buffers.insert((long int)base);
+    if ( VAPPTracing  & VAPP_MEM_ACCESS ) {
+        thread_data_t *tdata = get_tls(tid);
+        
+        if ( tdata->checkAccess ) {
+            void * base =  addr_in_buffer((void*)raddr1, tid);
+            if ( NULL != base ) {
+                //cout << (void*) ip << " MemRead access to " << base << " from thread " << tid << endl;
+                tdata->buffers.insert((long int)base);
+            }
         }
     }
 
@@ -203,19 +204,20 @@ void VAPPMemRead(void *ex, ADDRINT ip, ADDRINT raddr1, UINT32 rsize, ADDRINT tid
 
 // This function is called for every instruction reads from memory.
 void VAPPMemRead2(void *ex, ADDRINT ip, ADDRINT raddr1, ADDRINT raddr2, UINT32 rsize, ADDRINT tid) {
-    thread_data_t *tdata = get_tls(tid);
-    //long int vclk = getClk();
-
-    if ( tdata->checkAccess ) {
-        void * base =  addr_in_buffer((void*)raddr1, tid);
-        if ( NULL != base ) {
-            //cout << (void*) ip << " MemRead2 access to " << base << " from thread " << tid << endl;
-            tdata->buffers.insert((long int)base);
-        }
-        base =  addr_in_buffer((void*)raddr2, tid);
-        if ( NULL != base ) {
-            //cout << (void*) ip << " MemRead2 access to " << base << " from thread " << tid << endl;
-            tdata->buffers.insert((long int)base);
+    if ( VAPPTracing  & VAPP_MEM_ACCESS ) { 
+        thread_data_t *tdata = get_tls(tid);
+        
+        if ( tdata->checkAccess ) {
+            void * base =  addr_in_buffer((void*)raddr1, tid);
+            if ( NULL != base ) {
+                //cout << (void*) ip << " MemRead2 access to " << base << " from thread " << tid << endl;
+                tdata->buffers.insert((long int)base);
+            }
+            base =  addr_in_buffer((void*)raddr2, tid);
+            if ( NULL != base ) {
+                //cout << (void*) ip << " MemRead2 access to " << base << " from thread " << tid << endl;
+                tdata->buffers.insert((long int)base);
+            }
         }
     }
 
@@ -224,16 +226,19 @@ void VAPPMemRead2(void *ex, ADDRINT ip, ADDRINT raddr1, ADDRINT raddr2, UINT32 r
 
 // This function is called for every instruction write from memory.
 void VAPPMemWrite(void *ex, ADDRINT ip, ADDRINT waddr1, INT32 wsize, ADDRINT tid) {
-    thread_data_t *tdata = get_tls(tid);
-
-    if ( tdata->checkAccess ) {
-        void * base =  addr_in_buffer((void*)waddr1, tid);
-        // //long int vclk = getClk();
-        if ( NULL != base ) {
-            //cout << (void*) ip << " MemWrite access to " << base << " from thread " << tid << endl;
-            tdata->buffers.insert((long int)base);
+    if ( VAPPTracing  & VAPP_MEM_ACCESS ) { 
+        thread_data_t *tdata = get_tls(tid);
+        
+        if ( tdata->checkAccess ) {
+            void * base =  addr_in_buffer((void*)waddr1, tid);
+            // //long int vclk = getClk();
+            if ( NULL != base ) {
+                //cout << (void*) ip << " MemWrite access to " << base << " from thread " << tid << endl;
+                tdata->buffers.insert((long int)base);
+            }
         }
     }
+
     incrClk();
 }
 
@@ -245,61 +250,75 @@ void VAPPInstruction(void *ex, void *ip, ADDRINT tid) {
 
 void VAPPMallocEnter(RTN rtn, ADDRINT size, ADDRINT tid)
 {
-    //cout << "malloc(" << size << ") @ " << tid << endl;
-    thread_data_t *tdata = get_tls(tid);
-    tdata->enterMalloc(size);    
+    if ( VAPPTracing & VAPP_ALLOC_FREE ) {
+        //cout << "malloc(" << size << ") @ " << tid << endl;
+        thread_data_t *tdata = get_tls(tid);
+        tdata->enterMalloc(size);    
+    }
 }
 
 void VAPPMallocLeave(RTN rtn, ADDRINT result, ADDRINT tid)
 {
-    //cout << (void*)result << endl;
-    thread_data_t *tdata = get_tls(tid);
-    if ( result != 0 ) {
-        //cout << "malloc(" << tdata->mallocSize << ") = " << (void*)result << " @ " << tid << endl;
-        add_new_buffer((void*)result, tdata->mallocSize, tid);
-        db_add_malloc(getClk(), tdata->mallocSize, result, tid);
+    if ( VAPPTracing & VAPP_ALLOC_FREE ) {
+        //cout << (void*)result << endl;
+        thread_data_t *tdata = get_tls(tid);
+        if ( result != 0 ) {
+            //cout << "malloc(" << tdata->mallocSize << ") = " << (void*)result << " @ " << tid << endl;
+            add_new_buffer((void*)result, tdata->mallocSize, tid);
+            db_add_malloc(getClk(), tdata->mallocSize, result, tid);
+        }
+        tdata->leaveMalloc();
     }
-    tdata->leaveMalloc();
 }
 
 void VAPPFree(RTN rtn, ADDRINT buf, ADDRINT tid)
 {
-    //cout << "free(" << (void*)buf << ") @ " << tid  << endl;
-    db_add_free(getClk(), buf, tid);
+    if ( VAPPTracing & VAPP_ALLOC_FREE ) {
+        //cout << "free(" << (void*)buf << ") @ " << tid  << endl;
+        db_add_free(getClk(), buf, tid);
+    }
 }
 
 void VAPPLockEnter(RTN rtn, ADDRINT lock, ADDRINT tid) 
 {
-    //cout << " pthread_mutex_lock("  << (void*)lock << ") = @ " << tid << endl;
-    thread_data_t *tdata = get_tls(tid);
-    tdata->enterLock((pthread_mutex_t*)lock);
+    if ( VAPPTracing & VAPP_LOCK_UNLOCK ) {
+        //cout << " pthread_mutex_lock("  << (void*)lock << ") = @ " << tid << endl;
+        thread_data_t *tdata = get_tls(tid);
+        tdata->enterLock((pthread_mutex_t*)lock);
+    }
 }
 
 void VAPPLockLeave(RTN rtn, ADDRINT result, ADDRINT tid) 
 {
-    //cout << "  leave lock " << result << " @ " << tid << endl;
-    thread_data_t *tdata = get_tls(tid);
-    db_add_access(tdata->epoch_start, getClk(), tid, tdata->buffers);
-    db_add_lock(getClk(), (long int)tdata->lock, tid);
-    tdata->leaveLock();
-    tdata->reset(getClk());
+    if ( VAPPTracing & VAPP_LOCK_UNLOCK ) {
+        //cout << "  leave lock " << result << " @ " << tid << endl;
+        thread_data_t *tdata = get_tls(tid);
+        db_add_access(tdata->epoch_start, getClk(), tid, tdata->buffers);
+        db_add_lock(getClk(), (long int)tdata->lock, tid);
+        tdata->leaveLock();
+        tdata->reset(getClk());
+    }
 }
 
 void VAPPUnLockEnter(RTN rtn, ADDRINT lock, ADDRINT tid) 
 {
-    //cout << "pthread_mutex_unlock("  << (void*)lock << ") = @ " << tid << endl;
-    thread_data_t *tdata = get_tls(tid);
-    tdata->enterUnLock((pthread_mutex_t*)lock);
+    if ( VAPPTracing & VAPP_LOCK_UNLOCK ) {
+        //cout << "pthread_mutex_unlock("  << (void*)lock << ") = @ " << tid << endl;
+        thread_data_t *tdata = get_tls(tid);
+        tdata->enterUnLock((pthread_mutex_t*)lock);
+    }
 }
 
 void VAPPUnLockLeave(RTN rtn, ADDRINT result, ADDRINT tid) 
 {
-    //cout << "   " << result << " @ " << tid << endl;
-    thread_data_t *tdata = get_tls(tid);
-    db_add_access(tdata->epoch_start, getClk(), tid, tdata->buffers);
-    db_add_unlock(getClk(), (long int)tdata->lock, tid);
-    tdata->leaveUnLock();
-    tdata->reset(getClk());
+    if ( VAPPTracing & VAPP_LOCK_UNLOCK ) {
+        //cout << "   " << result << " @ " << tid << endl;
+        thread_data_t *tdata = get_tls(tid);
+        db_add_access(tdata->epoch_start, getClk(), tid, tdata->buffers);
+        db_add_unlock(getClk(), (long int)tdata->lock, tid);
+        tdata->leaveUnLock();
+        tdata->reset(getClk());
+    }
 }
 
 void VAPPThreadStart(THREADID threadid, CONTEXT *ctxt, INT32 flags, VOID *v)
@@ -326,6 +345,25 @@ void VAPPThreadStop(THREADID threadid, const CONTEXT *ctxt, INT32 flags, VOID *v
     ReleaseLock(&vapp_lock);
   
     delete tdata;
+}
+
+void VAPPControlTraceOn(RTN rtn, ADDRINT param0)
+{
+    GetLock(&vapp_lock, PIN_GetTid()+1);
+
+    VAPPTracing = (vapp_flags_t)(VAPPTracing | param0);
+
+    ReleaseLock(&vapp_lock);
+}
+
+
+void VAPPControlTraceOff(RTN rtn, ADDRINT param0)
+{
+    GetLock(&vapp_lock, PIN_GetTid()+1);
+
+    VAPPTracing = (vapp_flags_t)(VAPPTracing & (~(param0)));
+
+    ReleaseLock(&vapp_lock);
 }
 
 void VAPPInit() {

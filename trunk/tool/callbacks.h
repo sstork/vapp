@@ -25,21 +25,53 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
  * OF SUCH DAMAGE.
  */
-#ifndef VAPP_CONTROL_H
-#define VAPP_CONTROL_H
 
-typedef enum {
-    VAPP_NONE        = 0x0,
-    VAPP_FN_CALL     = 0x1,
-    VAPP_MEM_ACCESS  = 0x2,
-    VAPP_ALLOC_FREE  = 0x4,
-    VAPP_LOCK_UNLOCK = 0x8,
-    VAPP_ALL         = 0xffff
-} vapp_flags_t;
+#ifndef CALLBACKS_H
+#define CALLBACKS_H
 
-void VAPPTraceOn(vapp_flags_t flags);
+#include "pin.H"
 
-void VAPPTraceOff(vapp_flags_t flags);
+#include "VAPPControl.h"
+
+// This function is called for every instruction reads from memory.
+void VAPPMemRead(void *ex, ADDRINT ip, ADDRINT raddr1, UINT32 rsize, ADDRINT tid);
 
 
-#endif // VAPP_CONTROL_H
+// This function is called for every instruction reads from memory.
+void VAPPMemRead2(void *ex, ADDRINT ip, ADDRINT raddr1, ADDRINT raddr2, UINT32 rsize, ADDRINT tid);
+
+
+// This function is called for every instruction write from memory.
+void VAPPMemWrite(void *ex, ADDRINT ip, ADDRINT waddr1, INT32 wsize, ADDRINT tid);
+
+// This function is called for all non memory access instructions.
+// We need this function for a correct instruction cache simulation.
+void VAPPInstruction(void *ex, void *ip, ADDRINT tid);
+
+void VAPPMallocEnter(RTN rtn, ADDRINT size, ADDRINT tid);
+
+void VAPPMallocLeave(RTN rtn, ADDRINT result, ADDRINT tid);
+
+void VAPPFree(RTN rtn, ADDRINT buf, ADDRINT tid);
+
+void VAPPLockEnter(RTN rtn, ADDRINT lock,  ADDRINT tid);
+
+void VAPPLockLeave(RTN rtn, ADDRINT result, ADDRINT tid);
+
+void VAPPUnLockEnter(RTN rtn, ADDRINT lock,  ADDRINT tid);
+
+void VAPPUnLockLeave(RTN rtn, ADDRINT result, ADDRINT tid);
+
+void VAPPThreadStart(THREADID threadid, CONTEXT *ctxt, INT32 flags, VOID *v);
+
+void VAPPThreadStop(THREADID threadid, const CONTEXT *ctxt, INT32 flags, VOID *v);
+
+void VAPPControlTraceOn(RTN rtn, ADDRINT param0);
+
+void VAPPControlTraceOff(RTN rtn, ADDRINT param0);
+
+void VAPPInit();
+
+void VAPPFinalize();
+
+#endif //

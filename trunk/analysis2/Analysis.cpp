@@ -195,6 +195,7 @@ void Analysis::compute()
 
 
 void Analysis::analyse() {
+    list<Buffer*> buffers;
     cout << "== ANALYSE ============================================" << endl;
 
     Thread* t[threads.size()];
@@ -223,8 +224,8 @@ void Analysis::analyse() {
                 Buffer *b2 = t2->getBuffer((*it)->getStart());
                 
                 cout << "shared buffer " << b1->getStart() << endl; 
-                // cout << "  t1 " << b1->toStringAlllocks() <<endl;
-                // cout << "  t2 " << b2->toStringAlllocks() <<endl;
+                //cout << "  t1 " << b1->toStringAlllocks() <<endl;
+                //cout << "  t2 " << b2->toStringAlllocks() <<endl;
                 cout << "  t1 " << b1->toStringLockSet() <<endl;
                 cout << "  t2 " << b2->toStringLockSet() <<endl;
 

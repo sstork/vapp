@@ -100,7 +100,33 @@ void VAPPInstrumentInstruction(INS ins, VOID *v)
 
 VOID VAPPInstrumentImage(IMG img, VOID *v)
 {
-    RTN rtn;
+
+    RTN rtn =  RTN_FindByName(img, "VAPPTraceOn");
+    // 'redirect' calls from control library
+    if ( RTN_Valid(rtn) ) {
+            RTN_Open(rtn);
+            // callback after we returned from call
+            RTN_InsertCall(rtn,
+                           IPOINT_AFTER,
+                           (AFUNPTR)VAPPControlTraceOn,
+                           IARG_PTR, rtn,
+                           IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
+                           IARG_END);
+            RTN_Close(rtn);
+    }
+
+    rtn =  RTN_FindByName(img, "VAPPTraceOff");
+    if ( RTN_Valid(rtn) ) {
+            RTN_Open(rtn);
+            // callback after we returned from call
+            RTN_InsertCall(rtn,
+                           IPOINT_BEFORE,
+                           (AFUNPTR)VAPPControlTraceOff,
+                           IARG_PTR, rtn,
+                           IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
+                           IARG_END);
+            RTN_Close(rtn);
+    }
 
     rtn =  RTN_FindByName(img, "malloc");
     if ( RTN_Valid(rtn) ) {
