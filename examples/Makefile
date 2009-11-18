@@ -6,6 +6,7 @@ all:
 	${MAKE} -C scs_replay
 	${MAKE} -C simple_missing_lock
 	${MAKE} -C test_lockset
+	${MAKE} -C test_openmp
 
 
 clean:
@@ -16,3 +17,4 @@ clean:
 	${MAKE} -C scs_replay clean
 	${MAKE} -C simple_missing_lock clean
 	${MAKE} -C test_lockset clean
+	${MAKE} -C test_openmp clean
