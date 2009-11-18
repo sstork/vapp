@@ -1,0 +1,38 @@
+- implementation
+  - fix output analysis 
+
+- report
+  - introduction
+    - SQL queries 
+      - datatlog 
+    - replay (define)
+    - multi-threaded
+    - related work 
+      - Todds papers (mempsy)
+      - Erasure
+  - design/approach
+    - pin-tools
+    - replay library
+    - control library 
+    - analysis 
+   - setup
+    - system/tools
+  - evaluation
+    - performance evaluation cache simulator 
+    - performance with/without pin tool 
+    - analysis (limitations)
+      - heuristics : first multithreaded access 
+  - surprises/lessons learned
+    - log size explosion 
+    - low performance of database 
+    - shortcomings in analysis 
+    - crappy STL library
+  - future work 
+    - deterministic replay via locking order
+  - conclusions
+
+- poster
+  - Motivation
+  - Design/Approach (2)
+  - Evaluation (2)
+  - Future Work/Conclusion
