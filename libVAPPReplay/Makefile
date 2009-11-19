@@ -1,4 +1,4 @@
-CXXFLAGS=-fPIC -Wall -g -I.
+CXXFLAGS=-fPIC -Wall -O2 -I. -pg
 
 all:libVAPPReplay.a
 

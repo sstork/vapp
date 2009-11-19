@@ -1,5 +1,5 @@
 CC=g++
-CXXFLAGS=-Wall -I../../libVAPPReplay -I. -g
+CXXFLAGS=-Wall -I../../libVAPPReplay -I. -O3 -pg
 LDFLAGS=-L ../../libVAPPReplay/ 
 SOURCES=AssociativeCache.cpp 				\
 		Cache.cpp							\

@@ -25,44 +25,26 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
  * OF SUCH DAMAGE.
  */
-#include "Part.h"
 
-#include <fstream>
-#include <iostream>
+#include <stdlib.h>
+#include <stdio.h>
 
-#include <VAPPReplay.h>
+#include <VAPPControl.h>
 
-using namespace std;
+#define SIZE 200
 
-int main(int argc, char *argv[])
-{
-    //    Executor *ex = NULL;
-    if ( argc < 2 ) {
-        cout << "usage : simple_replay [FILENAME]" << endl;
-        return -1;
-    }
+int main(void){
+  int value = 0xdeadbeef;
+  int *buffer;
+  int i = 0;
 
-    // initialize database
-    if ( false == vappr_init(argv[1]) ) {
-        cerr << "Failed to open : " << argv[1] << endl;
-        return -1;
-    }
+  buffer = (int*)malloc(SIZE*SIZE*sizeof(int));
 
-    // add instruction counter
-    vappr_add_executor(new Part(128*1024 /* cache size */,
-                                64 /* line size */,
-                                100 /* cacheMissLatency */,
-                                20 /* memoryRepeatRate */,
-                                1 /* associativity */,
-                                3 /* prefetch */,
-                                NO_PREFETCH /* prefecth mode */)
-                       );
+  printf("HelloWorld\n");
 
-    // run memory accesses
-    vappr_run_memory_accesses();
+  for ( i = 0 ; i < SIZE*SIZE ; i++ ) {
+      buffer[i] = value;
+  }
 
-    // cleanup
-    vappr_finalize();
-
-    return 0;
+  return buffer[0];
 }
