@@ -39,7 +39,7 @@ using namespace std;
 
 
 static long int VCLOCK = 0;
-static vapp_flags_t  VAPPTracing = VAPP_NONE;
+static vapp_flags_t  VAPPTracing = VAPP_ALL;
 static PIN_LOCK cb_lock;
 
 // This function is called for every instruction reads from memory.
@@ -51,9 +51,9 @@ void VAPPMemRead(void *ex, ADDRINT ip, ADDRINT raddr1, UINT32 rsize) {
         db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)raddr1, (unsigned long int)ip, tid, 0);
     }
 
-    GetLock(&cb_lock, tid+1);
+    //GetLock(&cb_lock, tid+1);
     VCLOCK++;
-    ReleaseLock(&cb_lock);
+    //ReleaseLock(&cb_lock);
 }
 
 
@@ -67,9 +67,9 @@ void VAPPMemRead2(void *ex, ADDRINT ip, ADDRINT raddr1, ADDRINT raddr2, UINT32 r
         db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)raddr2, (unsigned long int)ip, tid, 0);
     }
 
-    GetLock(&cb_lock, tid+1);
+    //GetLock(&cb_lock, tid+1);
     VCLOCK++;
-    ReleaseLock(&cb_lock);
+    //ReleaseLock(&cb_lock);
 }
 
 
@@ -82,9 +82,9 @@ void VAPPMemWrite(void *ex, ADDRINT ip, ADDRINT waddr1, INT32 wsize) {
         db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)waddr1, (unsigned long int)ip, tid, 1);
     }
 
-    GetLock(&cb_lock, tid+1);
+    //GetLock(&cb_lock, tid+1);
     VCLOCK++;
-    ReleaseLock(&cb_lock);
+    //ReleaseLock(&cb_lock);
 }
 
 
@@ -96,9 +96,9 @@ void VAPPInstruction(void *ex, void *ip) {
     if ( VAPPTracing  & VAPP_MEM_ACCESS ) {
         db_add_mem_access((unsigned long int)VCLOCK, (unsigned long int)ip, (unsigned long int)ip, tid, 0);
     }
-    GetLock(&cb_lock, tid+1);
+    //GetLock(&cb_lock, tid+1);
     VCLOCK++;
-    ReleaseLock(&cb_lock);
+    //ReleaseLock(&cb_lock);
 }
 
 
@@ -133,26 +133,32 @@ void VAPPFree(RTN rtn, ADDRINT *buf)
 
 void VAPPControlTraceOn(RTN rtn, ADDRINT param0)
 {
-    GetLock(&cb_lock, PIN_GetTid()+1);
+    //GetLock(&cb_lock, PIN_GetTid()+1);
 
     VAPPTracing = (vapp_flags_t)(VAPPTracing | param0);
 
-    ReleaseLock(&cb_lock);
+    //ReleaseLock(&cb_lock);
 }
 
 
 void VAPPControlTraceOff(RTN rtn, ADDRINT param0)
 {
-    GetLock(&cb_lock, PIN_GetTid()+1);
+    //GetLock(&cb_lock, PIN_GetTid()+1);
 
     VAPPTracing = (vapp_flags_t)(VAPPTracing & (~(param0)));
 
-    ReleaseLock(&cb_lock);
+    //ReleaseLock(&cb_lock);
 }
 
 void cb_init()
 {
     // Initialize the pin lock
     InitLock(&cb_lock);
+    
+    char *tflags = getenv("VAPP_TRACE");
+    
+    if ( tflags ) {
+        VAPPTracing = (vapp_flags_t)atoi(tflags);
+    }
 }
 

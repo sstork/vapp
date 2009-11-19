@@ -52,6 +52,7 @@ struct mem_stack_t {
     } stack[4];
 };
 
+
 static int callback(void *vmem_stack, int argc, char **argv, char **azColName){
   mem_stack_t *mem_stack = (mem_stack_t*)vmem_stack;
   enum {
@@ -139,10 +140,9 @@ static int callback(void *vmem_stack, int argc, char **argv, char **azColName){
           return 0;
       }
   }
-
-
   return 0;
 }
+
 
 bool vappr_init(std::string filename)
 {
@@ -152,6 +152,19 @@ bool vappr_init(std::string filename)
         sqlite3_close(db);
         return false;
     }
+
+    if ( sqlite3_exec(db, "PRAGMA synchronous=OFF", NULL, NULL, NULL) != SQLITE_OK ) {
+        fprintf(stderr, "Can't execute command:  %s\n", sqlite3_errmsg(db));
+        sqlite3_close(db);
+        exit(1);
+    }
+
+    if ( sqlite3_exec(db, "PRAGMA cache_size=1000000", NULL, NULL, NULL) != SQLITE_OK ) {
+        fprintf(stderr, "Can't execute command:  %s\n", sqlite3_errmsg(db));
+        sqlite3_close(db);
+        exit(1);
+    }
+    
 
     return true;
 }

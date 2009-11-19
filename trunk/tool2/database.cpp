@@ -57,7 +57,7 @@ static void db_exec_direct(string cmd)
 
 static inline void db_exec(string cmd)
 {
-    GetLock(&db_lock, PIN_GetTid()+1);
+    //GetLock(&db_lock, PIN_GetTid()+1);
 
     db_buf.push_back(cmd);
 
@@ -69,8 +69,8 @@ static inline void db_exec(string cmd)
         db_exec_direct("END;");
         db_buf.clear();
     }
-
-    ReleaseLock(&db_lock);
+    
+    //ReleaseLock(&db_lock);
 }
 
 
