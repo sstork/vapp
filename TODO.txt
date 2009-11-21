@@ -11,6 +11,7 @@
       - Todds papers (mempsy)
       - Erasure
   - design/approach
+    - explain evolution of design
     - pin-tools
     - replay library
     - control library 
@@ -32,6 +33,8 @@
     - deterministic replay via locking order
     - extract NUMA related information 
     - lock contention information
+    - comparing logged data across multiple executions
+    - reduce log size for scalability, Netzer's transitive reductions
   - conclusions
 
 - poster
