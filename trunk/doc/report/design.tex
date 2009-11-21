@@ -156,12 +156,44 @@ Figure \ref{pic:db_schema2} illustrates the database
 schema of the Pin tool designed for parallel program analysis.
 The schema is composed of the the follow tables: (TODO)
 \begin{description}
-  \item[Threads]
-  \item[Mallocs]
-  \item[Frees]
-  \item[Accesses]
-  \item[Locks]
-  \item[Unlocks]
+  \item[Threads] This table gather all information of the threads that
+    have been executed during the program execution. An entry in the
+    table consists of the time the thread has been created
+    (\texttt(Start), the time the thread terminated (\texttt(End) and
+    an unique,numerical identifier (\texttt{TID}).
+  \item[Accesses] This tables track execution epochs and the buffers
+    touched during this execution period. To avoid a variable length
+    entries in the database we use fixed size entries to specify one
+    buffer/epoch mapping. An entry in this table consists of the time
+    the execution epoch begins (\texttt{Start}), the time when it ends
+    (\texttt{End}), the number of the thread that executed this epoch
+    (\texttt{TID}) and the base address of the buffer
+    (\texttt{Buffer}).
+  \item[Locks] This table records all executed
+    \texttt{pthread\_mutex\_lock} and
+    \texttt{GOMP\_critical\_start} calls. An entry in this table
+    consists of the simulation time (\texttt{VLCK}) the call occurred,
+    the base address (\texttt{Address}) of the lock and the
+    numerical identifier of the thread performing the operation
+    (\texttt{TID}).
+  \item[UnLocks] This table records all executed
+    \texttt{pthread\_mutex\_unlock} and
+    \texttt{GOMP\_critical\_end} calls. An entry in this table
+    consists of the simulation time (\texttt{VLCK}) the call occurred,
+    the base address (\texttt{Address}) of the lock and the
+    numerical identifier of the thread performing the operation
+    (\texttt{TID}).
+  \item[Frees] This table records all executed \texttt{free} calls. An
+    entry in this table consists of the simulation time
+    (\texttt{VLCK}) the call occurred, the base address
+    (\texttt{Address}) of the buffer and the numerical identifier of
+    the thread performing the operation (\texttt{TID}).
+  \item[Mallocs] This table records all memory allocations via
+    \texttt{malloc}. An entry in this table consists of the simulation
+    time (\texttt{VLCK}) the call occurred, the size of the allocated
+    buffer (\texttt{Size}), the base address (\texttt{Address}) of
+    the buffer and the numerical identifier of
+    the thread performing the operation (\texttt{TID}).
 \end{description}
 
 \begin{figure}
