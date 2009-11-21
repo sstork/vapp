@@ -1,7 +1,110 @@
 \section{Design}
+Here we present the VAPP's structure and implementation details,
+as well as the history and reasoning that led to this final approach.
+
+\subsection{VAPP Modules}
+The three primary layers of VAPP are a Pin\footnote{http://www.pintool.org/}
+tool for dynamic binary instrumentation, a SQLite\footnote{http://www.sqlite.org/}
+database to store application traces, and a collection of replay and analysis
+programs. In addition, we have written two libraries that are used for logging
+control and core replay functionality. TODO: need figure?
+
+\subsection{Pin Tool}
+While Pin is very feature-rich in terms of the kinds of information
+it provides access to during instrumented application execution, this
+comes at a cost with regard to execution time.  Given that we wished to
+design a tool that would allow programmers to repeatedly run and rerun
+their applications on a large set of architecture configurations,
+one design goal was to make this process as fast as possible.  We assume
+that the application will be executed on very many types of simulated
+architectures, and thus concluded that the best way to reduce the
+total time to conduct the simulations would be to log an execution trace
+and amortize the slowdown from the Pin tool over many replays.  Note that
+this approach further assumes that the application designer wishes to
+use the same set of input for all replays or sufficiently large
+groups of replays.
+
+To be precise, we have implemented two distinct Pin tools to focus
+on the detailed logging required for application replay and the
+different trace requirements needed for the analysis of parallel
+program correctness respectively.  In theory, these two tools could
+be merged and log the union of all data that each individual tool
+tracks.  However, we discovered that from a practical standpoint
+such an approach could be seriously inefficient, in particular
+when the user desires some form of analysis that does not
+require full application replay.  That is, in order to replay
+application execution, it is necessary to log all memory accesses
+an other information at a very detailed level.  However, our
+analysis of parallel programs can be achieved with a much more
+coarse execution trace and logging less results in faster execution
+and perhaps more importantly much smaller logs.  Smaller log file in
+turn lead to faster database accesses and faster execution of our
+analysis programs.
+
+As mentioned above, the replay-oriented pin tool must log memory
+operations in great detail, which conflicts with our desire to
+keep the log database as small as possible for performance reasons.
+Therefore, our final design allows the application to dynamically
+turn selectively switch certain subsets of the logging on and off
+or entirely disable the trace some of the execution.  This is
+achieved via simple calls to our VAPP control library, which 
+only requires the application code to specify which logging
+features are to be enabled or disabled at that point.
+The Pin tool instruments such library calls and then adjust the
+logging accordingly.  The specific trace information that can
+be controlled in this manner is function calls, memory accesses,
+memory allocations and deallocations, and locking and unlocking.
+
+The parallel program-oriented tool is able to track execution
+as a coarser grain by analyzing memory operations at the level
+of buffers instead of individual addresses.  We define a buffer
+as the block of memory that is allocated by a single call to
+\texttt{malloc}.  Thus, all parallel program correctness analysis,
+such as lockset analysis, is also performed at the level of buffers.
+Consequently, programs that lock memory at finer level, for instance
+by having different locks to protect different rows or blocks of a matrix,
+can lead to false positives in the analysis routines.
+Given the performance benefits, we feel that this is a reasonable tradeoff.
+
+\subsection{Database Functionality and Schema}
+We chose SQLite to store our application traces for its usability
+and portability.  The entire database that stores the logs is
+saved as a single file that can be easily moved across machines
+or archived.  In addition, SQLite was easy to learn and begin
+using, which was of critical importance given the strict timeline
+for our project.  Moreover, the open source
+SQLite Database Browser\footnote{http://sqlitebrowser.sourceforge.net/}
+allows application programmers (our intended users) to easily view
+and query the SQLite database, which was a significant goal of our
+work.  By exposing the logged data, developers can implement
+certain analysis and explore their application's behavior directly
+without writing custom replay code.  Figures \ref{pic:sqlite_browse}
+and \ref{pic:sqlite_query}
+provide one such an example where a user is investigating
+whether a particular memory buffer is accessed by a single thread.
+
+
+\begin{figure}
+  \includegraphics[width=\columnwidth]{sqlite_browse}
+  \caption{Storing application traces as an SQLite database
+  	allows users to easily access the data with the SQLite
+  	Database Browser.}
+  \label{pic:sqlite_browse}
+\end{figure}
+
+
+\begin{figure}
+  \includegraphics[width=\columnwidth]{sqlite_query}
+  \caption{Users can query the SQLite database to learn
+  	about their application's execution.  Here the user
+  	has determined that a particular memory buffer was
+  	accessed by multiple threads.}
+  \label{pic:sqlite_query}
+\end{figure}
+
 
 Figure \ref{pic:db_schema1} shows the database schema for the first
-pin tool, that records all memory operations. The schema consists of
+Pin tool, that records all memory operations. The schema consists of
 the following tables:
 \begin{description}
   \item[Images] Tracks information about which images
@@ -41,6 +144,7 @@ the following tables:
     the buffer.
 \end{description}
 
+
 \begin{figure}
   \includegraphics[width=\columnwidth]{database_schema1}
   \caption{Database Schema Pin-Tool1}
@@ -48,8 +152,111 @@ the following tables:
 \end{figure}
 
 
+Figure \ref{pic:db_schema2} illustrates the database
+schema of the Pin tool designed for parallel program analysis.
+The schema is composed of the the follow tables: (TODO)
+\begin{description}
+  \item[Threads]
+  \item[Mallocs]
+  \item[Frees]
+  \item[Accesses]
+  \item[Locks]
+  \item[Unlocks]
+\end{description}
+
 \begin{figure}
   \includegraphics[width=\columnwidth]{database_schema2}
   \caption{Database Schema Pin-Tool2}
   \label{pic:db_schema2}
 \end{figure}
+
+
+\subsection{Application Replay}
+Presently, VAPP supports the replay of memory operations with
+particular focus on memory accesses and usage patterns.  This
+level of replay is sufficient to allow a user to simulate
+execution on a variety of memory-related hardware components.
+We felt this was an important area to focus on first because
+memory accesses can oftentimes be the major bottleneck in program
+performance.  By replaying memory operations, a developer can
+investigate how varying levels of cache or page tables, cache 
+configurations, shared/private caches, shared/separate L1 instruction
+and data cache, etc. impact performance.
+
+The core replay functionality is implemented in the VAPP replay
+library.  This library loads memory operations from the database
+into higher-level objects that can be accessed and manipulated
+by the architecture simulation code that will step through
+the simulated program execution.
+
+\subsection{Parallel Program Analysis}
+Our analysis of code running on parallel architectures is
+not replay-based and thus does not require individual memory
+accesses to be logged or loaded.  Specifically, VAPP can
+examine shared memory protection and locking behavior via
+the classic lockset algorithm \cite{savage1997eraser},
+determine which memory buffers are accessed by which threads,
+and report which buffers are allocated but not used or not freed.
+
+The goal of this analysis is to allow the programmer to make
+educated architecture-centered decisions.  For instance, if
+it is discovered that certain memory buffers are consistently
+accessed only by a single processor, that information can be
+fed back to the system so that this memory is pinned to that
+processor's cache so that communication overhead is reduced.
+Information regarding lock usage and contention can be
+used to determine what types of low-level locking mechanisms
+might be best for the application given the performance, 
+communication, and space tradeoffs in these mechanisms.
+Lockset analysis is an fundamental component in the analysis
+of parallel program correctness.  By reporting which
+memory buffers are not protected by a consistent set of locks
+when they are accessed, the programmer can detect concurrency
+bugs.  Conversely, if it is discovered that a buffer is
+protected by multiple locks, the programmer may realize that
+certain locks are redundant and improve performance by eliminated
+unneeded locks.
+
+While there are a number of parallel programming models in use today,
+VAPP focuses on the popular OpenMP\footnote{http://openmp.org/wp/}
+and Pthreads\footnote{https://computing.llnl.gov/tutorials/pthreads/}
+approaches.  OpenMP support comes in the form of logging
+the use of critical sections pragmas and the memory they protect.
+Pthread-based parallel programs typically protect memory
+via explicit calls to \texttt{pthread\_mutex\_lock} and
+\texttt{pthread\_mutex\_unlock}, thus VAPP tracks these calls.
+
+
+\subsection{Evolution From Initial Design}
+VAPP's focus has evolved since it's inception.  Initially, the
+majority of our efforts were to focus on the goal of making
+single-threaded applications' execution traces accessible via
+SQL queries, because we felt this was the most unique component
+of our proposed work.  We also intended the support
+efficient iterative simulations as the current version of VAPP does.
+However, after helpful discussions with Dr. Mowry we came to
+the conclusion that this scope alone was more interesting
+to a software engineering audience than the architecture community.
+Thus, we scaled back our work on the rich analysis that could be
+expressed purely as SQL queries and added our parallel architecture-oriented
+goals as a major component of VAPP.
+
+As discussed previously, the size of the SQLite database logs became
+problematic when logging detailed traces on larger applications.
+This led us to introduce the VAPP trace control library, which
+allows developers to only trace the most interested portions of
+an application, thereby reducing the log size.  In addition,
+we realized that parallel programs often share data at a somewhat
+coarse level in order to reduce communication overhead and that
+logging every individual memory access may not be necessary for
+their analysis.  Thus, we split the Pin tool so that the tool
+for parallel analysis could log less detailed information at the
+level of memory buffers.  This resulted in a massive reduction in
+log size, which improved the performance of both the Pin tool
+and the analysis programs.
+
+Lastly, early on we intended to only support Pthreads for our parallel analysis,
+but found that we had time after completing our 100\% goals to extend
+VAPP to support OpenMP as well.  Due to the popularity of OpenMP,
+this makes VAPP attractive to a much larger community of
+developers.
