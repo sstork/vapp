@@ -1,0 +1,106 @@
+%-----------------------------------------------------------------------------
+%
+%               Template for LaTeX Class/Style File
+%
+% Name:         sigplanconf-template.tex
+% Purpose:      A template for sigplanconf.cls, which is a LaTeX 2e class
+%               file for SIGPLAN conference proceedings.
+%
+% Author:       Paul C. Anagnostopoulos
+%               Windfall Software
+%               978 371-2316
+%               paul@windfall.com
+%
+% Created:      15 February 2005
+%
+%-----------------------------------------------------------------------------
+
+\documentclass[natbib,10pt,preprint]{sigplanconf}
+\usepackage[american]{babel}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage[all]{hypcap}        % jump to the picture and not the caption
+
+
+%%
+%% Tune Latex for better usage of white space
+%%
+\renewcommand{\topfraction}{0.95}
+\renewcommand{\textfraction}{0.05}
+\renewcommand\floatpagefraction{0.95}
+\renewcommand\dbltextfloatsep{12pt}
+\renewcommand\textfloatsep{12pt}
+\setlength{\abovecaptionskip}{0pt}
+\setlength{\belowcaptionskip}{0pt} 
+\clubpenalty=0
+\widowpenalty=0
+
+
+%%
+%% Setup PDF meta information
+%%
+\hypersetup{
+  pdfauthor={Anthony Gitter, Sven Stork},
+  pdftitle={Virtual Application Profiler},
+  pdfborder={0 0 0}      %% disable border around links
+}
+
+
+\begin{document}
+
+\conferenceinfo{ }
+\CopyrightYear{ }
+\copyrightdata{ }
+
+
+\titlebanner{DRAFT -- do not distribute}        % These are ignored unless
+\preprintfooter{short description of paper}   % 'preprint' option specified.
+
+\title{Virtual Application Profiler}
+
+
+%%
+%% setup authors and affiliations 
+%%
+
+\authorinfo{Anthony Gitter \and Sven Stork }
+           {School of Computer Science \\* Carnegie Mellon University  \\* 5000 Forbes Avenue \\* Pittsburgh, PA 15213, USA}
+           {\{agitter,svens\}@cs.cmu.edu}
+
+
+\maketitle
+
+%%======================================================================
+%% Introduction
+%%======================================================================
+\input{abstract}
+
+
+\terms
+profiling
+
+\keywords
+profiling concurrency
+
+
+%%======================================================================
+%% Introduction
+%%======================================================================
+\input{introduction}
+
+
+%%======================================================================
+%% Design
+%%======================================================================
+\input{design}
+
+
+
+%%======================================================================
+%% References
+%%======================================================================
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\end{document}
+
