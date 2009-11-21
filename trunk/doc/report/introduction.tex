@@ -1,1 +1,32 @@
 \section{Introduction}
+The Virtual Application Profiler (VAPP) was designed to give programmers
+greater understanding and control of their code in response to
+the rising complexity in architecture over the past decades.
+In this context, architecture complexity refers to both the
+complicated hardware units of a single core (such as the Pentium 4)
+as well as the new challenges brought forth by the rise of
+multicore machines.
+
+Specifically, our goals are to (1) allow programmers to quickly
+simulate application execution over a large set of architecture
+configurations, (2) assist in the testing and debugging of
+programs that run on parallel architecture, and (3) do so in a
+transparent manner that allows programmers to easily access and
+query those aspects of an application's behavior that are relevant to
+these tasks.  To achieve these goals, we have pursued a
+log-and-replay approach, in which a trace of application's execution
+is stored and subsequently replayed on simulated architecture or
+used for other high level analysis.  The logged data is stored
+in a manner that allows the programmer to directly inspect or
+make custom inquiries over the trace.
+
+The third goal is the primary novel technical contribution of this
+work that distinguishes our approach from the multitude of
+related profilers and replay tools.  TODO: describe how our
+project differs from MemSpy \cite{martonosi1992memspy},
+SIGMA \cite{derose2002sigma}, BugNet \cite{narayansamy2005bugnet},
+Eraser \cite{savage1997eraser}, and FDR \cite{xu2003fdr}.
+
+We have released VAPP as an open source project and it is available
+for download from our Google Code page (\url{http://code.google.com/p/vapp/}),
+which is linked from our project web site.
