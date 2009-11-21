@@ -16,11 +16,13 @@
     - replay library
     - control library 
     - analysis 
-   - setup
+    - setup
     - system/tools
   - evaluation
     - performance evaluation cache simulator 
     - performance with/without pin tool 
+    - performance of pin tool 1 vs. pin tool 2
+    - log sizes
     - analysis (limitations)
       - heuristics : first multithreaded access 
   - surprises/lessons learned
