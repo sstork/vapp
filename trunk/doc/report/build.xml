@@ -1,0 +1,103 @@
+<?xml version="1.0"?>
+<project name="Computer Architecture Final Report" default="pdf" basedir=".">
+    <property name="build_target" value="report"/>
+
+    <target name="init">
+        <tstamp/>
+    </target>
+    
+    <target name="pdflatex">
+        <exec dir="." executable="pdflatex">
+            <arg value="${build_target}.tex"/>
+        </exec>
+    </target>
+
+    <target name="pslatex">
+        <exec dir="." executable="pslatex">
+            <arg value="${build_target}.tex"/>
+        </exec>
+    </target>
+
+    <target name="bibtex">
+        <exec dir="." executable="bibtex">
+            <arg value="${build_target}"/>
+        </exec>
+    </target>
+
+    <target name="fig2dev">
+        <echo>convert pictures from fig -> pdf </echo>
+        <apply executable="fig2dev" verbose="true">
+            <arg value="-L"/>
+            <arg value="pdf"/>
+            <srcfile/>
+            <targetfile/>
+            <fileset dir="." includes="**/*.fig"/>
+            <mapper type="glob" from="*.fig" to="*.pdf"/>
+        </apply>
+    </target>  
+
+    <target name="dot">
+        <echo>convert pictures from dot -> pdf </echo>
+        <apply executable="dot" verbose="true">
+            <arg value="-Tpdf"/>
+            <arg value="-x"/>
+            <arg value="-o"/>
+            <targetfile/>
+            <srcfile/> 
+            <fileset dir="." includes="**/*.dot"/>
+            <mapper type="glob" from="*.dot" to="*_dot.pdf"/>
+        </apply>
+    </target>  
+
+    <target name="rebuild" description="rebuild diagrams form sources">
+        <delete verbose="true">
+            <fileset dir=".">
+                <include name="**/*.dot.pdf"/>
+            </fileset>
+       </delete>
+        <antcall target="dot"/>
+    </target>
+
+    <target name="pdf" description="build PDF version" depends="init,fig2dev">
+        <antcall target="pdflatex"/>
+        <antcall target="bibtex"/>
+        <antcall target="pdflatex"/>
+        <antcall target="pdflatex"/>
+    </target>
+
+    <target name="ps" description="build PS version" depends="init,fig2dev">
+        <antcall target="pslatex"/>
+        <antcall target="bibtex"/>
+        <antcall target="pslatex"/>
+        <antcall target="pslatex"/>
+    </target>
+
+    <target name="all" depends="pdf">
+    </target>
+
+    <target name="clean" description="remove all temp. and build files">
+        <delete verbose="true">
+            <fileset dir=".">
+                <exclude name="database_schema*.pdf"/>
+                <include name="**/*.pdf"/>
+                <include name="**/*.dvi"/>
+                <include name="**/*.ps"/>
+                <include name="**/*.aux"/>
+                <include name="**/*.log"/>
+                <include name="**/*.toc"/>
+                <include name="**/*.brf"/>
+                <include name="**/*.bbl"/>
+                <include name="**/*.lof"/>
+                <include name="**/*.blg"/>
+                <include name="**/*.thm"/>
+                <include name="**/*.out"/>
+                <include name="**/*.tcp"/>
+                <include name="**/*.tps"/>
+                <include name="svens*.sty"/>
+            </fileset>
+        </delete>
+    </target>
+
+</project>
+
+
