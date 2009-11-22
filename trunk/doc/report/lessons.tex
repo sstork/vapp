@@ -1,1 +1,26 @@
 \section{Lessons Learned}
+One surprise we encountered relatively early in the project
+was the drawbacks of using a SQLite database to store the
+application traces.  Our testing showed explosive growth
+of the log file size as we scaled our test programs,
+with some log files growing to several hundred megabytes
+even on moderate length programs.  In addition, as
+seen in our evaluation the writing to the database is a
+huge bottleneck in the performance of our Pin tool.
+While we maintain that may not be a critical problem if the
+user intends to amortize the initial cost of creating the
+trace over a very large number of simulated replays,
+the number of replays required to make the initial instrumented
+execution worthwhile is greater than we expected.  This suggests
+that the reason previous work has not exposed the logged data to
+the user to the degree we do is that doing so is impractical
+with regard to log file size and exaggerated slowdown.
+
+Another unexpected challenge we faced during development was
+the difficulty in simulating hardware.  As a 125\% goal we
+had hoped to simulate more than just the cache, and had considered
+using VAPP to demonstrate the effects of using huge page tables
+in a system.  However, we were unable to complete this task and
+we now understand how daunting it would be to further develop
+VAPP to realistically simulate a variety of real architectures and
+configurations of those architectures.
