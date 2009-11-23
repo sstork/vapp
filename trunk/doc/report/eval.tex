@@ -1,4 +1,73 @@
 \section{Experimental Evaluation}
+
+\begin{figure}
+  \lstset{language=C, basicstyle=\small}
+  \begin{lstlisting}
+#define N 200
+
+int main(void){
+  int value = 0xCafeBabe;
+  int *buffer;
+  int i = 0;
+
+  buffer = (int*)malloc(N*N*sizeof(int));
+
+  for ( i = 0 ; i < N*N ; i++ ) {
+      buffer[i] = value;
+  }
+
+  return buffer[0];
+}
+  \end{lstlisting}
+  \caption{The source code for \texttt{test\_init} program. (Note the memory leak is intentionally.)}
+  \label{fig:text_init}
+\end{figure}
+
+\begin{table*}
+  \begin{tabularx}{\textwidth}{X r r r r r}
+    \toprule
+    Program/Configuration & Time (no logging) [s] & Time (logging) [s] & log size [bytes] & scs\_relay [s] & scs\_pin [s]\\
+    \midrule
+    helloword         & 1.21 & 12.14 &  6961152 & 0.70  & 0.89 \\
+    \addlinespace[1mm]
+    \rowcolor[gray]{.9}
+    text\_init/N=10   & 1.23 & 11.48 &  6601728 & 0.66 & 0.89 \\
+    \addlinespace[1mm]
+    text\_init/N=20   & 1.23 & 11.48 &  6717440 & 0.66 & 0.89 \\ 
+    \addlinespace[1mm]
+    \rowcolor[gray]{.9}
+    text\_init/N=30   & 1.25 & 12.07 &  6912000 & 0.70 & 0.90 \\
+    \addlinespace[1mm]
+    text\_init/N=40   & 1.24 & 12.57 &  7183360 & 0.74 & 0.90 \\
+    \addlinespace[1mm]
+    \rowcolor[gray]{.9}
+    text\_init/N=50   & 1.25 & 13.19 &  7532544 & 0.76 & 0.90 \\
+    \addlinespace[1mm]
+    text\_init/N=100  & 1.24 & 18.71 & 10441728 & 1.08 & 0.90 \\
+    \addlinespace[1mm]
+    \rowcolor[gray]{.9}
+    text\_init/N=150  & 1.26 & 27.79 & 15292416 & 1.60 & 0.90 \\
+    \addlinespace[1mm]
+    text\_init/N=200  & 1.28 & 40.57 & 22071296 & 2.33 & 1.04 \\
+    \bottomrule
+  \end{tabularx}
+  \caption{Performance evaluation and comparison of between the cache
+    simulator using directly the pin infrastructure and using out
+    replay library.}
+\end{table*}
+
+\begin{figure}
+  \includegraphics[width=\columnwidth]{eval_log_size}
+  \caption{The evaluation of the log size while changing parameter N of the \texttt{test\_init} program. }
+  \label{fig:eval_log_size}
+\end{figure}
+
+\begin{figure}
+  \includegraphics[width=\columnwidth]{eval_execution_time_trace}
+  \caption{The evaluation of the log size while changing parameter N of the \texttt{test\_init} program. }
+  \label{fig:eval_execution_time_trace}
+\end{figure}
+
 Compare with FDR, which claims 2\% slowdown in a typically scenario
 and 34 MB log files (for 1 billion instruction replay window)
 per processor in addition to a full memory dump.
@@ -15,3 +84,29 @@ However, in other cases a several hundred MB trace is compressed
 to a less than 1 MB trace.
 
 MemSpy results in 22 to 58 times slowdown during testing on a single processor.
+
+\begin{figure*}
+  \lstset{basicstyle=\footnotesize, mathescape=true}
+  \begin{lstlisting}
+Each sample counts as 0.01 seconds.
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls  ms/call  ms/call  name    
+ 43.44      0.43     0.43  4047013     0.00     0.00  sqlite3VXPrintf
+ 12.12      0.55     0.12   809419     0.00     0.00  sqlite3VdbeExec
+  6.06      0.61     0.06   758517     0.00     0.00  Profiler::addToRead(long, long, long, long)
+  3.03      0.64     0.03  5665887     0.00     0.00  sqlite3ApiExit
+  3.03      0.67     0.03  4047031     0.00     0.00  sqlite3ValueText
+  3.03      0.70     0.03  4047017     0.00     0.00  sqlite3StrAccumAppend
+  3.03      0.73     0.03   809305     0.00     0.00  Profiler::addToUsage(long, long)
+  2.53      0.76     0.03  4047023     0.00     0.00  sqlite3VdbeSerialGet
+  2.02      0.78     0.02  4047031     0.00     0.00  sqlite3VdbeChangeEncoding
+  2.02      0.80     0.02  4047023     0.00     0.00  columnMem
+  2.02      0.82     0.02  4047012     0.00     0.00  sqlite3_snprintf
+  2.02      0.84     0.02   809401     0.00     0.00  callback(void*, int, char**, char**)
+  1.52      0.85     0.02  4047059     0.00     0.00  sqlite3DbMallocSize
+  $\vdots$
+  \end{lstlisting}
+ 
+  \caption{GProf results of the cache simulator run using our replay library}
+  \label{fig:profile}
+\end{figure*}
