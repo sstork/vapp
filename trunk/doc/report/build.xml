@@ -79,6 +79,7 @@
         <delete verbose="true">
             <fileset dir=".">
                 <exclude name="database_schema*.pdf"/>
+                <exclude name="overview.pdf"/>
                 <include name="**/*.pdf"/>
                 <include name="**/*.dvi"/>
                 <include name="**/*.ps"/>
