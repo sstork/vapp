@@ -80,6 +80,9 @@
             <fileset dir=".">
                 <exclude name="database_schema*.pdf"/>
                 <exclude name="overview.pdf"/>
+                <exclude name="eval_log_size.pdf"/>
+                <exclude name="eval_execution_time_replay.pdf"/>
+                <exclude name="eval_execution_time_tracing.pdf"/>
                 <include name="**/*.pdf"/>
                 <include name="**/*.dvi"/>
                 <include name="**/*.ps"/>
