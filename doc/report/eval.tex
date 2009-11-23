@@ -1,1 +1,17 @@
 \section{Experimental Evaluation}
+Compare with FDR, which claims 2\% slowdown in a typically scenario
+and 34 MB log files (for 1 billion instruction replay window)
+per processor in addition to a full memory dump.
+
+Compare with BugNet, whose First Load Log grew to ~100 MB in the worst
+case and less than 20 MB on average when using a window of 1
+billion instructions.
+
+Compare with Eraser.  Programs run 10 to 30 times slower with Eraser.
+
+SIGMA does not report slowdown caused by instrumentation, but shows
+that some of its logs can grow to hundreds of MB even \emph{after} compression.
+However, in other cases a several hundred MB trace is compressed
+to a less than 1 MB trace.
+
+MemSpy results in 22 to 58 times slowdown during testing on a single processor.
