@@ -5,16 +5,27 @@ Our design assumes a shared memory multiprocessor system and does
 not require hardware support.
 
 \subsection{VAPP Modules}
-The three primary layers of VAPP are a Pin\footnote{http://www.pintool.org/}
-tool for dynamic binary instrumentation, a SQLite\footnote{http://www.sqlite.org/}
-database to store application traces, and a collection of replay and analysis
-programs. In addition, we have written two libraries that are used for logging
-control and core replay functionality. TODO: need figure?
+The three primary layers of VAPP are a
+Pin\footnote{http://www.pintool.org/} tool for dynamic binary
+instrumentation, a SQLite\footnote{http://www.sqlite.org/} database to
+store application traces, and a collection of replay and analysis
+programs. In addition, we have written two libraries that are used for
+logging control and core replay functionality. These components and
+their relationship is shown in Figure \ref{fig:overview}.
 
 \begin{figure*}
-  \includegraphics[width=\textwidth]{overview}
-  \caption{sd}
+  \begin{center}
+  \includegraphics[width=.9\textwidth]{overview}
+  \caption{Application of different platforms can be analyzed by any
+    of our pin-tools. Using out VAPPControl library applications can
+    limit the gather trace information in scope and time. Each
+    pin-tool will write its data into a single sqlite database
+    file. This database file will then be used as source for our
+    analysis (SQL based or direct) and as input to out VAPPReplay
+    library. The VAPPReplay library provides a simple C++ class
+    abstract for the ease of developing analysis or simulations.}
   \label{fig:overview}
+  \end{center}
 \end{figure*}
 
 \subsection{Pin Tool}
@@ -224,10 +235,49 @@ configurations, shared/private caches, shared/separate L1 instruction
 and data cache, etc. impact performance.
 
 The core replay functionality is implemented in the VAPP replay
-library.  This library loads memory operations from the database
-into higher-level objects that can be accessed and manipulated
-by the architecture simulation code that will step through
-the simulated program execution.
+library. One of the central parts if the library is the Executor class
+(see Figure \ref{fig:executor}). The Executor class is an abstract
+class that provides callback methods for every memory
+operations. Every simulation/analysis need to inherit from the
+Executor class and implement the callback methods. The programmer then
+can register its implementation (or several implementations if
+necessary or required) with the library and start the replay.  The
+replay library loads memory operations from the database and replays
+them into every executor that has been attached to it.
+
+
+
+\begin{figure*}
+  \lstset{
+    language=C++,
+    basicstyle=\small,
+  }
+  \begin{lstlisting}
+class Executor {
+ public:
+  virtual ~Executor() {}
+
+  // is called for instructions that read one memory location
+  virtual void memRead(long ip, long addr, int size) = 0;
+
+  // is called for instructions that read two memory location
+  virtual void memRead(long ip, long addr1, long addr2, int size) = 0;
+
+  // is called for instructions that write to memory
+  virtual void memWrite(long ip, long addr, int size) = 0;
+
+  // called for all other instructions
+  virtual void instruction(long ip) = 0;
+
+  // is called when the simulation ends to generate the final report
+  virtual void doReport(std::ostream &os) = 0;
+
+};
+  \end{lstlisting}
+  \caption{The abstract Executor class, that every simulation needs to
+    sub-class in order to recieve memory callbacks.}
+  \label{fig:executor}
+\end{figure*}
 
 \subsection{Parallel Program Analysis}
 Our analysis of code running on parallel architectures is
