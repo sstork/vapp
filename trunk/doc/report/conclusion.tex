@@ -40,12 +40,20 @@ VAPP is not as well-suited for applications that run on new
 input with every modification to the target architecture.  It will
 still function in such cases, but the overhead may make it a less
 attractive than alternatives that perform simulation alongside
-application execution.  One limitation of VAPP is inherent in
+application execution.
+
+One limitation of VAPP is inherent in
 dynamic analysis tools for correctness in parallel programs and
 as such cannot be easily overcome.  That is, a dynamic tool
 can only detect concurrency bugs that occur during program
 execution and cannot guarantee that failure to detect such
 bugs means they will not arise under different conditions.
+However, it has been shown that given a particular
+execution of a program that uses multiple semaphores,
+detecting races or determining all possible orderings that could
+lead to an indistinguishable execution in NP-hard
+\cite{netzer1990complexity}.  As such, we certainly do not consider
+this limitation to be due to a weakness of VAPP.
 
 Now the we have implemented the core VAPP framework and basic
 replay and analysis functionality, there are many directions
@@ -55,7 +63,14 @@ log files when tracing medium to large scale programs must be
 addressed.  Our control library to dynamically disable logging
 during certain parts of execution is a step in the right direction,
 but does not help when the programmer wishes to store and replay
-a full trace.  Previous approaches for reducing the amount
+a full trace.  In addition, because VAPP does not take a snapshot
+of the current system state when the trace is turned off, it is
+possible that replaying only those portions of the application
+execution that were logged could result in simulations that differ
+from the original execution due to discrepancies in the initial
+system state.  Thus, more sophisticate techniques for reducing
+the log size must be investigated.
+Previous approaches for reducing the amount
 of data that must be logged, such as Netzer's transitive
 reduction \cite{netzer1993optimal}, can likely be introduced to
 VAPP or custom compression techniques could be developed.  In addition,
@@ -82,7 +97,7 @@ or list-based locks) only as needed.  However, because VAPP analysis
 is done offline, one would either need to assume that multithread
 memory usage patterns do not significantly vary from execution to
 execution or that trends could be generalized by running VAPP on
-traces from multiple executions.  
+traces from multiple executions.
 
 It would also be very interested to reunite our two Pin tools
 so that users could replay parallel programs.  Deterministic

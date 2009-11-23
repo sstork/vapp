@@ -20,13 +20,79 @@ used for other high level analysis.  The logged data is stored
 in a manner that allows the programmer to directly inspect or
 make custom inquiries over the trace.
 
-The third goal is the primary novel technical contribution of this
-work that distinguishes our approach from the multitude of
-related profilers and replay tools.  TODO: describe how our
-project differs from MemSpy \cite{martonosi1992memspy},
-SIGMA \cite{derose2002sigma}, BugNet \cite{narayansamy2005bugnet},
-Eraser \cite{savage1997eraser}, and FDR \cite{xu2003fdr}.
+Because VAPP's broad goals encompass replay on simulated architecture
+and data race detection, there a large body of related work.
+However, similar approaches focus on only one of these two problems.
+MemSpy \cite{martonosi1992memspy}, like VAPP, is a software-based
+profiler designed to help developers target performance bottlenecks 
+due to the memory hierarchy.  MemSpy performs more detailed analysis
+than what VAPP presently offers and reports statistics (such as
+memory stall time) at the level of code-data pairs.  For instance,
+it can show how many stalls are due to memory accesses to a particular
+matrix in a specific inner loop of a program.  Unlike VAPP, MemSpy
+performs all analysis dynamically, must be rerun every time
+the simulated architecture's parameters are changed, and does not
+concern itself with parallel program correctness.
+SIGMA \cite{derose2002sigma} is more similar to VAPP in that it
+instruments code, stores an execution trace, uses the trace
+to simulate execution on various hardware configurations, and
+logs statistics for the user to view.  It is also software-based
+and allows users to simulate execution on many architecture
+configurations from a single trace file.  SIGMA is also more
+fully featured than VAPP's simulated replay at the moment because it simulates
+a larger portion of the memory hierarchy, but it does not target
+issues related to data races and parallel program debugging.
 
-We have released VAPP as an open source project and it is available
+Related work relevant to VAPP's second goal includes
+data race detectors and deterministic replay tools. 
+RecPlay \cite{ronsse2000non} is a software tool
+that detects data races by making multiple executions of
+the target program, performing different levels of
+analysis with each pass.  This enables it to trace
+a minimal amount of information as opposed to all memory
+accesses.  VAPP only requires an application to be
+executed once, and is suitable for more general
+parallel program analysis than data race detection.
+Eraser \cite{savage1997eraser} is also software-based
+and implements a very similar locket algorithm to
+detect inconsistent lock usage in parallel programs.
+It performs dynamic analysis as opposed to VAPP's
+log-and-replay approach, and it limited to analysis
+of Pthreads locks unlike VAPP, which also supports
+OpenMP.  BugNet \cite{narayansamy2005bugnet} and FDR
+\cite{xu2003fdr} both log program execution in order
+to replay it in a deterministic manner to assist
+in debugging following a crash.  They create checkpoints
+of system state and then track all execution for a fixed
+window (e.g. 1 billion instructions).  These methods
+both require hardware support.  FDR supports full system
+replay, whereas BugNet (like VAPP) focuses on user-level
+application code only.  BugNet is unique in that it
+primarily records only loads, and can reconstruct
+deterministic replays from the load data and checkpoints.
+However, both FDR and BugNet do not detect data races
+or concurrency bugs unless they cause an application
+or system to crash.  They also can only replay a fixed
+window of execution, unlike VAPP which aims to
+replay the entire execution.  Nevertheless, these
+two methods support a much more comprehensive form of replay
+than VAPP in its current state.
+All of the above methods differ from VAPP in that they
+only consider a single architecture configuration during
+replay and analysis.  Please see Xu et al. \cite{xu2003fdr} for a more
+comprehensive comparison of related data race detection
+and deterministic replay tools.
+
+Note that none of these methods allow users to access or
+query information concerning application execution and behavior
+as VAPP does.  Thus, our third goal is one of the primary novel
+technical contributions of this
+work that distinguishes our approach from the multitude of
+related profilers and replay tools.  Unifying our first and
+second goals in a single tool is another unique aspect of VAPP,
+and to our knowledge all existing related work concentrates on 
+only one these two problems that result from architecture-complexity.
+
+We have released VAPP as an open source project, and it is available
 for download from our Google Code page (\url{http://code.google.com/p/vapp/}),
 which is linked from our project web site.
