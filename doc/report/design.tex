@@ -279,6 +279,7 @@ class Executor {
 \end{figure*}
 
 \subsection{Parallel Program Analysis}
+\label{sec:ppa}
 Our analysis of code running on parallel architectures is
 not replay-based and thus does not require individual memory
 accesses to be logged or loaded.  Specifically, VAPP can
@@ -298,54 +299,76 @@ used to determine what types of low-level locking mechanisms
 might be best for the application given the performance, 
 communication, and space tradeoffs in these mechanisms.
 Lockset analysis is an fundamental component in the analysis
-of parallel program correctness.  By reporting which
+of parallel program correctness. By reporting which
 memory buffers are not protected by a consistent set of locks
 when they are accessed, the programmer can detect concurrency
-bugs.  Conversely, if it is discovered that a buffer is
+bugs. Conversely, if it is discovered that a buffer is
 protected by multiple locks, the programmer may realize that
 certain locks are redundant and improve performance by eliminated
 unneeded locks.
 
-While there are a number of parallel programming models in use today,
-VAPP focuses on the popular OpenMP\footnote{http://openmp.org/wp/}
-and Pthreads\footnote{https://computing.llnl.gov/tutorials/pthreads/}
-approaches.  OpenMP support comes in the form of logging
-the use of critical sections pragmas and the memory they protect.
-Pthread-based parallel programs typically protect memory
-via explicit calls to \texttt{pthread\_mutex\_lock} and
-\texttt{pthread\_mutex\_unlock}, thus VAPP tracks these calls.
+We extended this analysis into a second analysis, that allows the
+analyze of lockset amongst several different threads. This analysis
+reports which buffers are shared amongst which threads along with
+their corresponding locking set.
 
+While there are a number of parallel programming models in use today,
+VAPP focuses on the popular OpenMP\footnote{http://openmp.org/wp/} and
+Pthreads\footnote{https://computing.llnl.gov/tutorials/pthreads/}
+approaches.  Pthread-based parallel programs typically protect memory
+via explicit calls to \texttt{pthread\_mutex\_lock} and
+\texttt{pthread\_mutex\_unlock}, thus VAPP tracks these calls.  OpenMP
+support comes in the form of logging the use of critical sections
+pragmas and the memory they protect. If the Open MP implementation
+would use the pthread functionality then we would already have
+everything in place to analyze Open MP programs. Unfortunately does
+the Open MP implementation of GCC (called GOMP) not use pthread
+mutexes. After analyzing the source code of the corresponding runtime
+library, we discovered that the implementation uses system level
+locks. Fortunately the runtime implementation used a similar
+abstraction. Every time a critical section is entered the
+\texttt{GOMP\_critical\_start} method is called to lock a default
+lock, and the \texttt{GOMP\_critical\_end} method is call when leaving
+a critical section to unlock the default lock. We therefore thread
+like the \texttt{pthread\_mutex\_lock} and
+\texttt{pthread\_mutex\_unlock} functions. Because the GOMP function
+always lock a default lock, there is no need to pass the lock explicit
+as parameter to the function. We therefore cannot detect the lock
+address when those methods are called. Fortunately we do not need the
+exact address, because the those functions will always lock/unlock the
+same lock. We there replace the lock address in the case of GOMP
+function call with a magic value (in our case 666).
 
 \subsection{Evolution From Initial Design}
 VAPP's focus has evolved since it's inception.  Initially, the
 majority of our efforts were to focus on the goal of making
-single-threaded applications' execution traces accessible via
-SQL queries, because we felt this was the most unique component
-of our proposed work.  We also intended the support
-efficient iterative simulations as the current version of VAPP does.
-However, after helpful discussions with Dr. Mowry we came to
-the conclusion that this scope alone was more interesting
-to a software engineering audience than the architecture community.
-Thus, we scaled back our work on the rich analysis that could be
-expressed purely as SQL queries and added our parallel architecture-oriented
-goals as a major component of VAPP.
+single-threaded applications' execution traces accessible via SQL
+queries, because we felt this was the most unique component of our
+proposed work.  We also intended the support efficient iterative
+simulations as the current version of VAPP does.  However, after
+helpful discussions with Dr. Mowry we came to the conclusion that this
+scope alone was more interesting to a software engineering audience
+than the architecture community.  Thus, we scaled back our work on the
+rich analysis that could be expressed purely as SQL queries and added
+our parallel architecture-oriented goals as a major component of VAPP.
 
 As discussed previously, the size of the SQLite database logs became
-problematic when logging detailed traces on larger applications.
-This led us to introduce the VAPP trace control library, which
-allows developers to only trace the most interested portions of
-an application, thereby reducing the log size.  In addition,
-we realized that parallel programs often share data at a somewhat
-coarse level in order to reduce communication overhead and that
-logging every individual memory access may not be necessary for
-their analysis.  Thus, we split the Pin tool so that the tool
-for parallel analysis could log less detailed information at the
-level of memory buffers.  This resulted in a massive reduction in
-log size, which improved the performance of both the Pin tool
-and the analysis programs.
+problematic when logging detailed traces on larger applications.  This
+led us to introduce the VAPP trace control library, which allows
+developers to only trace the most interested portions of an
+application, thereby reducing the log size.  In addition, we realized
+that parallel programs often share data at a somewhat coarse level in
+order to reduce communication overhead and that logging every
+individual memory access may not be necessary for their analysis.
+Thus, we split the Pin tool so that the tool for parallel analysis
+could log less detailed information at the level of memory buffers.
+This resulted in a massive reduction in log size, which improved the
+performance of both the Pin tool and the analysis programs.
 
-Lastly, early on we intended to only support Pthreads for our parallel analysis,
-but found that we had time after completing our 100\% goals to extend
-VAPP to support OpenMP as well.  Due to the popularity of OpenMP,
-this makes VAPP attractive to a much larger community of
-developers.
+Lastly, early on we intended to only support Pthreads for our parallel
+analysis, but found that we had time after completing our 100\% goals
+to extend VAPP to support OpenMP as well. Due to the popularity of
+OpenMP, this makes VAPP attractive to a much larger community of
+developers. 
+
+

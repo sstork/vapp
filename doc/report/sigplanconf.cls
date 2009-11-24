@@ -554,24 +554,25 @@
 
 
 \def \@copyrightspace {%
- \@float{copyrightbox}[b]%
- \vbox to 1in{%
-   \vfill
-   \parbox[b]{20pc}{%
-     \scriptsize
-     \if \@preprint
-       [Copyright notice will appear here
-        once 'preprint' option is removed.]\par
-     \else
-       \@toappear
-     \fi
-     \if \@reprint
-       \noindent Reprinted from \@conferencename,
-       \@proceedings,
-       \@conferenceinfo,
-       pp.~\number\thepage--\pageref{sigplanconf@finalpage}.\par
-     \fi}}%
- \end@float}
+ %% \@float{copyrightbox}[b]%
+ %% \vbox to 1in{%
+ %%   \vfill
+ %%   \parbox[b]{20pc}{%
+ %%     \scriptsize
+ %%     \if \@preprint
+ %%       [Copyright notice will appear here
+ %%        once 'preprint' option is removed.]\par
+ %%     \else
+ %%       \@toappear
+ %%     \fi
+ %%     \if \@reprint
+ %%       \noindent Reprinted from \@conferencename,
+ %%       \@proceedings,
+ %%       \@conferenceinfo,
+ %%       pp.~\number\thepage--\pageref{sigplanconf@finalpage}.\par
+ %%     \fi}}%
+ %% \end@float
+}
 
 \long\def \toappear #1{%
  \def \@toappear {#1}}

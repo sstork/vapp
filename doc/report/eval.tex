@@ -135,9 +135,79 @@ an internal SQLite function, converting the data from the database
 into a sting representation.
 
 
-\begin{figure}
+%% \begin{figure}
+%%   \centering
+%%   \lstset{language=C, basicstyle=\small}
+%%   \subfloat{
+%%     \begin{minipage}{.4\textwidth}
+%%       \begin{lstlisting}
+%% %% int main(void) 
+%% %% {
+%% %%   int *result = (int*)malloc(sizeof(int));
+%% %%   int value = 3;
+  
+%% %% #pragma omp parallel for 
+%% %%   for ( int i = 0 ; i < 100  ; i++ )  {
+%% %%     if ( i % value == 0) {
+%% %%       #pragma omp critical 
+%% %%       {
+%% %%         if ( *result < i ) {
+%% %%           *result = i;
+%% %%         }
+%% %%       }
+%% %%     }
+%% %%   }
+%% %% }
+%%       \end{lstlisting}
+%%     \end{minipage}
+%%     }
+%%   \caption{The source code for \texttt{test\_openmp} program.}
+%%   \label{fig:test_openmp}
+%% \end{figure}
+
+
+\begin{figure*}
+  \centering
   \lstset{language=C, basicstyle=\small}
-  \begin{lstlisting}
+
+  \begin{minipage}{.45\textwidth}
+    \begin{lstlisting}
+int main(void) 
+{
+  int *result = (int*)malloc(sizeof(int));
+  int value = 3;
+  
+#pragma omp parallel for 
+  for ( int i = 0 ; i < 100  ; i++ )  {
+    if ( i % value == 0) 
+    {
+      if ( *result < i ) {
+        *result = i;
+      }
+    }
+  }
+}
+    \end{lstlisting}
+    \lstset{basicstyle=\scriptsize}
+    \begin{lstlisting}
+== ANALYSE =======================================
+Thread 0 -> [11018256,11018288,11019872,11020080]>
+Thread 1 -> [11018256,11018288,11019872]>
+shared buffer 11018256
+  t1 []
+  t2 []
+shared buffer 11018288
+  t1 []
+  t2 []
+shared buffer 11019872
+  t1 []
+  t2 []
+    \end{lstlisting}
+  \end{minipage}
+  \hspace{.025\textwidth}
+  \hspace{.025\textwidth}
+  \begin{minipage}{.45\textwidth}
+    \begin{lstlisting}
 int main(void) 
 {
   int *result = (int*)malloc(sizeof(int));
@@ -155,13 +225,62 @@ int main(void)
     }
   }
 }
-  \end{lstlisting}
-  \caption{The source code for \texttt{test\_openmp} program.}
-  \label{fig:test_openmp}
-\end{figure}
+    \end{lstlisting}
+    \lstset{basicstyle=\scriptsize}
+    \begin{lstlisting}
+== ANALYSE =======================================
+Thread 0 -> [32243728,32243760,32245344,32245552]>
+Thread 1 -> [32243728,32243760,32245344]>
+shared buffer 32243728
+  t1 [666]>
+  t2 [666]>
+shared buffer 32243760
+  t1 []
+  t2 []
+shared buffer 32245344
+  t1 []
+  t2 []
+    \end{lstlisting}
+  \end{minipage}
+  \caption{Comparison of an incorrect (left) and a correct (right)
+    Open MP program, along with the results of out analysis.}
+  \label{fig:openmp}
+\end{figure*}
 
 
 
+As described in Section \ref{sec:ppa}, we shifted out focus towards
+the analysis of concurrent programs. In this paragraph we present the
+a short evaluation of our second analysis. In Figure \ref{fig:openmp}
+a short test Open MP program is shown. While the left version of the
+program as a race condition, by not correctly synchronizing the access
+to the result buffer. The version on the right side correctly uses a
+critical section to protect the access to the result buffer.
+
+Below the source code of the programs the analysis output of extended
+analysis is shown\footnote{We run this test on a dual core
+  machine.}. First the analysis prints the threads along with their
+accesses buffers. Then the analysis prints for every shared buffer the
+lockset of the each thread\footnote{Note that the addresses of the
+  buffers may differ between different runs, depending on the address
+  that is returned by malloc.}. As shown on the analysis for the
+incorrect version, none of the 3 shared buffer is protected by a
+lock. In the correctly synchronized version we can see that the
+lockset of the first shared buffer is not empty and in fact we realize
+that this buffer is locked by the internal lock of the Open MP library
+(indicated by the magic value, as described in Section \ref{sec:ppa}).
+
+In both cases we see buffers that are shared and protected by any
+locks. Those internal buffers of Open MP. Given our current
+implementation of the analysis, our analysis has the disadvantage that
+if a buffer is accessed without any protecting lock being held, then
+the resulting lockset will always be empty. This is phenomena appears
+if for instance if one thread allocates the buffer, initializes the
+buffer without holding a lock. Future work could extend the current
+analysis to employ heuristics to detect when a buffer leaves the
+thread local state and enters the shared and vice versa.
+
+\textbf{TODO} \\
 Compare with FDR, which claims 2\% slowdown in a typically scenario
 and 34 MB log files (for 1 billion instruction replay window)
 per processor in addition to a full memory dump.
@@ -178,6 +297,7 @@ However, in other cases a several hundred MB trace is compressed
 to a less than 1 MB trace.
 
 MemSpy results in 22 to 58 times slowdown during testing on a single processor.
+
 
 \begin{figure*}
   \lstset{basicstyle=\footnotesize, mathescape=true}
