@@ -274,7 +274,7 @@ class Executor {
 };
   \end{lstlisting}
   \caption{The abstract Executor class, that every simulation needs to
-    sub-class in order to recieve memory callbacks.}
+    sub-class in order to receive memory callbacks.}
   \label{fig:executor}
 \end{figure*}
 
@@ -307,22 +307,22 @@ protected by multiple locks, the programmer may realize that
 certain locks are redundant and improve performance by eliminated
 unneeded locks.
 
-We extended this analysis into a second analysis, that allows the
-analyze of lockset amongst several different threads. This analysis
+We extended this analysis into a second set of analysis tools that allow the
+user to analyze locksets amongst several different threads. This analysis
 reports which buffers are shared amongst which threads along with
 their corresponding locking set.
 
 While there are a number of parallel programming models in use today,
-VAPP focuses on the popular OpenMP\footnote{http://openmp.org/wp/} and
-Pthreads\footnote{https://computing.llnl.gov/tutorials/pthreads/}
+VAPP focuses on the popular Open MP\footnote{http://openmp.org/wp/} and
+pthreads\footnote{https://computing.llnl.gov/tutorials/pthreads/}
 approaches.  Pthread-based parallel programs typically protect memory
 via explicit calls to \texttt{pthread\_mutex\_lock} and
-\texttt{pthread\_mutex\_unlock}, thus VAPP tracks these calls.  OpenMP
+\texttt{pthread\_mutex\_unlock}, thus VAPP tracks these calls.  Open MP
 support comes in the form of logging the use of critical sections
 pragmas and the memory they protect. If the Open MP implementation
 would use the pthread functionality then we would already have
-everything in place to analyze Open MP programs. Unfortunately does
-the Open MP implementation of GCC (called GOMP) not use pthread
+everything in place to analyze Open MP programs. Unfortunately
+the Open MP implementation of GCC (called GOMP) does not use pthread
 mutexes. After analyzing the source code of the corresponding runtime
 library, we discovered that the implementation uses system level
 locks. Fortunately the runtime implementation used a similar
@@ -332,12 +332,13 @@ lock, and the \texttt{GOMP\_critical\_end} method is call when leaving
 a critical section to unlock the default lock. We therefore thread
 like the \texttt{pthread\_mutex\_lock} and
 \texttt{pthread\_mutex\_unlock} functions. Because the GOMP function
-always lock a default lock, there is no need to pass the lock explicit
+always lock a default lock, there is no need to pass the lock explicitly
 as parameter to the function. We therefore cannot detect the lock
 address when those methods are called. Fortunately we do not need the
 exact address, because the those functions will always lock/unlock the
-same lock. We there replace the lock address in the case of GOMP
-function call with a magic value (in our case 666).
+same lock. We therefore replace the lock address in the case of GOMP
+function call with a magic value (in our case 666) that is unlikely
+to be used elsewhere.
 
 \subsection{Evolution From Initial Design}
 VAPP's focus has evolved since it's inception.  Initially, the
@@ -365,7 +366,7 @@ could log less detailed information at the level of memory buffers.
 This resulted in a massive reduction in log size, which improved the
 performance of both the Pin tool and the analysis programs.
 
-Lastly, early on we intended to only support Pthreads for our parallel
+Lastly, early on we intended to only support pthreads for our parallel
 analysis, but found that we had time after completing our 100\% goals
 to extend VAPP to support OpenMP as well. Due to the popularity of
 OpenMP, this makes VAPP attractive to a much larger community of
