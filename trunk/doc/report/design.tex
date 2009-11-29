@@ -11,17 +11,17 @@ instrumentation, a SQLite\footnote{http://www.sqlite.org/} database to
 store application traces, and a collection of replay and analysis
 programs. In addition, we have written two libraries that are used for
 logging control and core replay functionality. These components and
-their relationship is shown in Figure \ref{fig:overview}.
+their relationship are shown in Figure \ref{fig:overview}.
 
 \begin{figure*}
   \begin{center}
   \includegraphics[width=.9\textwidth]{overview}
-  \caption{Application of different platforms can be analyzed by any
-    of our pin-tools. Using out VAPPControl library applications can
+  \caption{Applications of different platforms can be analyzed by any
+    of our Pin tools. Using our VAPPControl library applications can
     limit the gather trace information in scope and time. Each
-    pin-tool will write its data into a single sqlite database
+    Pin tool will write its data into a single SQlite database
     file. This database file will then be used as source for our
-    analysis (SQL based or direct) and as input to out VAPPReplay
+    analysis (SQL-based or direct) and as input to out VAPPReplay
     library. The VAPPReplay library provides a simple C++ class
     abstract for the ease of developing analysis or simulations.}
   \label{fig:overview}
@@ -56,7 +56,7 @@ application execution, it is necessary to log all memory accesses
 an other information at a very detailed level.  However, our
 analysis of parallel programs can be achieved with a much more
 coarse execution trace and logging less results in faster execution
-and perhaps more importantly much smaller logs.  Smaller log file in
+and perhaps more importantly much smaller logs.  Smaller log files in
 turn lead to faster database accesses and faster execution of our
 analysis programs.
 
@@ -66,7 +66,7 @@ keep the log database as small as possible for performance reasons.
 Therefore, our final design allows the application to dynamically
 turn selectively switch certain subsets of the logging on and off
 or entirely disable the trace some of the execution.  This is
-achieved via simple calls to our VAPP control library, which 
+achieved via simple calls to our VAPPControl library, which 
 only requires the application code to specify which logging
 features are to be enabled or disabled at that point.
 The Pin tool instruments such library calls and then adjust the
@@ -80,7 +80,7 @@ of buffers instead of individual addresses.  We define a buffer
 as the block of memory that is allocated by a single call to
 \texttt{malloc}.  Thus, all parallel program correctness analysis,
 such as lockset analysis, is also performed at the level of buffers.
-Consequently, programs that lock memory at finer level, for instance
+Consequently, programs that lock memory at a finer level, for instance
 by having different locks to protect different rows or blocks of a matrix,
 can lead to false positives in the analysis routines.
 Given the performance benefits, we feel that this is a reasonable tradeoff.
@@ -88,7 +88,7 @@ Given the performance benefits, we feel that this is a reasonable tradeoff.
 \subsection{Database Functionality and Schema}
 We chose SQLite to store our application traces for its usability
 and portability.  The entire database that stores the logs is
-saved as a single file that can be easily moved across machines
+saved as a single file that can be easily moved across machines/platforms
 or archived.  In addition, SQLite was easy to learn and begin
 using, which was of critical importance given the strict timeline
 for our project.  Moreover, the open source
@@ -181,7 +181,7 @@ The schema is composed of the the follow tables:
     (\texttt{Start}), the time the thread terminated (\texttt{End}) and
     an unique,numerical identifier (\texttt{TID}).
   \item[Accesses] This tables track execution epochs and the buffers
-    touched during this execution period. To avoid a variable length
+    touched during this execution period. To avoid variable length
     entries in the database we use fixed size entries to specify one
     buffer/epoch mapping. An entry in this table consists of the time
     the execution epoch begins (\texttt{Start}), the time when it ends
@@ -238,7 +238,7 @@ The core replay functionality is implemented in the VAPP replay
 library. One of the central parts if the library is the Executor class
 (see Figure \ref{fig:executor}). The Executor class is an abstract
 class that provides callback methods for every memory
-operations. Every simulation/analysis need to inherit from the
+operations. Every simulation/analysis needs to inherit from the
 Executor class and implement the callback methods. The programmer then
 can register its implementation (or several implementations if
 necessary or required) with the library and start the replay.  The
@@ -273,7 +273,7 @@ class Executor {
   virtual void doReport(std::ostream &os) = 0;
 };
   \end{lstlisting}
-  \caption{The abstract Executor class, that every simulation needs to
+  \caption{The abstract Executor class that every simulation needs to
     sub-class in order to receive memory callbacks.}
   \label{fig:executor}
 \end{figure*}
@@ -329,7 +329,7 @@ locks. Fortunately the runtime implementation used a similar
 abstraction. Every time a critical section is entered the
 \texttt{GOMP\_critical\_start} method is called to lock a default
 lock, and the \texttt{GOMP\_critical\_end} method is call when leaving
-a critical section to unlock the default lock. We therefore thread
+a critical section to unlock the default lock. We therefore treat these
 like the \texttt{pthread\_mutex\_lock} and
 \texttt{pthread\_mutex\_unlock} functions. Because the GOMP function
 always lock a default lock, there is no need to pass the lock explicitly
@@ -341,11 +341,11 @@ function call with a magic value (in our case 666) that is unlikely
 to be used elsewhere.
 
 \subsection{Evolution From Initial Design}
-VAPP's focus has evolved since it's inception.  Initially, the
+VAPP's focus has evolved since its inception.  Initially, the
 majority of our efforts were to focus on the goal of making
 single-threaded applications' execution traces accessible via SQL
 queries, because we felt this was the most unique component of our
-proposed work.  We also intended the support efficient iterative
+proposed work.  We also intended to support efficient iterative
 simulations as the current version of VAPP does.  However, after
 helpful discussions with Dr. Mowry we came to the conclusion that this
 scope alone was more interesting to a software engineering audience
@@ -368,8 +368,8 @@ performance of both the Pin tool and the analysis programs.
 
 Lastly, early on we intended to only support pthreads for our parallel
 analysis, but found that we had time after completing our 100\% goals
-to extend VAPP to support OpenMP as well. Due to the popularity of
-OpenMP, this makes VAPP attractive to a much larger community of
+to extend VAPP to support Open MP as well. Due to the popularity of
+Open MP, this makes VAPP attractive to a much larger community of
 developers. 
 
 

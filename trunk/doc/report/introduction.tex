@@ -59,8 +59,8 @@ and implements a very similar locket algorithm to
 detect inconsistent lock usage in parallel programs.
 It performs dynamic analysis as opposed to VAPP's
 log-and-replay approach, and it limited to analysis
-of Pthreads locks unlike VAPP, which also supports
-OpenMP.  BugNet \cite{narayansamy2005bugnet} and FDR
+of pthreads locks unlike VAPP, which also supports
+Open MP.  BugNet \cite{narayansamy2005bugnet} and FDR
 \cite{xu2003fdr} both log program execution in order
 to replay it in a deterministic manner to assist
 in debugging following a crash.  They create checkpoints
@@ -72,7 +72,7 @@ application code only.  BugNet is unique in that it
 primarily records only loads, and can reconstruct
 deterministic replays from the load data and checkpoints.
 However, both FDR and BugNet do not detect data races
-or concurrency bugs unless they cause an application
+or concurrency bugs unless these bugs cause an application
 or system to crash.  They also can only replay a fixed
 window of execution, unlike VAPP which aims to
 replay the entire execution.  Nevertheless, these

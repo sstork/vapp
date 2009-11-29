@@ -36,10 +36,10 @@ int main(void){
 \end{figure}
 
 As one of our goals was to provide a fast replay mechanism for the
-logged data. We developed, based on the cache simulator from our
-$1^{st}$ assignment (hereafter referred to as \emph{scs\_pin}), a cache
+logged data. We developed one cache simulator based on our
+$1^{st}$ assignment (hereafter referred to as \emph{scs\_pin}) and another
 simulator that uses our replay mechanism (hereafter referred to as
-\emph{scs\_replay}). Given the fact that our pin version of the cache
+\emph{scs\_replay}). Given the fact that our Pin version of the cache
 simulator already used the Executor abstraction, the port was straightforward
 and allowed us to compare functionally and implementation-wise
 completely identically cache simulators with each other. To evaluate
@@ -106,8 +106,7 @@ our main interest was the comparison of the cache simulator execution
 times. As shown in Figure \ref{fig:eval_execution_time_replay}, the
 execution time for the replay version (scs\_replay column in the table) is only better 
 than for the `native' Pin tool version (scs\_pin column) for very small N.
-As soon as N gets bigger than
-100, we can see a clear trend towards a drastic performance penalty
+For N larger than 50, we can see a clear trend towards a drastic performance penalty
 for our replay approach. In the next section we will break down our
 analysis of this phenomenon.
 
@@ -133,7 +132,7 @@ of our Pin tool, which does not write any logging information, with
 the normal mode of our Pin tool. The results are shown Figure
 \ref{fig:eval_execution_time_tracing}. As seen in the figure, the
 execution time for the case without writing any logging information
-performs almost linearly as N grows, while execution with writing logging
+is almost constant as N grows, while execution with writing logging
 information is at least one order of magnitude worse (with a trend
 that appears to be exponential). A reason for this behavior can be directly 
 inferred by observing the amount of data that is stored in the
@@ -141,10 +140,10 @@ database, as shown in Figure \ref{fig:eval_log_size}\footnote{Note
   that the store operations modify a database table and do not just
   append the file.}. The execution time of the Pin tool is dominated
 by the increasing I/O costs as N grows, and the execution time
-and log size exhibit the same trend.
+and log size exhibit the same curve.
    
 To confirm this observation and evaluate if there
-is a single root cause that we could potentially overcome, recompiled
+is a single root cause that we could potentially overcome, we recompiled
 the whole software stack with profiling information and re-ran the
 replay cache simulator with the input for N = 200. As shown in
 Figure \ref{fig:profiler}, almost half of the time is spent by
@@ -353,6 +352,6 @@ shared buffer 32245344
     \end{lstlisting}
   \end{minipage}
   \caption{Comparison of an incorrect (left) and a correct (right)
-    Open MP program, along with the results of out analysis.}
+    Open MP program, along with the results of our analysis.}
   \label{fig:openmp}
 \end{figure*}
