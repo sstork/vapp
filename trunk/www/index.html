@@ -7,28 +7,24 @@
 <h1>15-740 Project: Virtual Application Profiler</h1>
 Sven Stork, Anthony Gitter
 <p>
-Existing binary instrumentation tools can be useful for analyzing code performance and optimal hardware
-structures for an application, but the slowdown from dynamic instrumentation can make the use of such
-tools a tedious process. In addition, any programmer wishing to create custom dynamic analysis must first
-learn to use an instrumentation library such as <a href="http://www.pintool.org/">Pin</a>.
-<p>
-We propose to implement a extensible framework for rapid prototyping and analysis of program behavior
-on hardware structures. Our framework will first use Pin to instrument code and log a trace of a program's
-execution, including information such as memory accesses, memory allocation, function calls, time, and symbol
-names. The trace will be stored in a <a href="http://www.sqlite.org/">SQLite</a> database. Based on this stored
-information, the programmer
-can quickly and easily perform different kinds of analysis without re-executing the Pin-instrumented code.
-<p>
-One of the main benefits of this approach is that all intermediate information is directly accessible via
-SQL queries, which enables programmers to build custom types of high level analysis with ease. However,
-analysis is not limited to what can be expressed as SQL queries, as we will use the database to retrieve
-information for more complex use cases. Equally important is the fact that the instrumented code only
-needs to be run once, because iteratively tweaking parameters and rerunning instrumented code can be a
-very slow process.
+As hardware grows more complex and with the transition
+to multicore systems, it becomes increasingly important for
+software developers to understand the interactions between
+their software and the underlying architecture in order to
+maximize performance and ensure correctness. We present
+the Virtual Application Profiler, a replay and analysis tool
+that facilitates this understanding by allowing programmers
+to iteratively simulate application execution on many architecture
+configurations and evaluate memory usage and protection
+in parallel programs. Our profiler is unique in that it
+logs all application execution traces in a <a href="http://www.sqlite.org/">SQLite</a> database,
+which allows developers to view and manipulate the logged
+data with ease.
 <p>
 Please see our <a href="proposal.html">project proposal</a> for more information.
 <p>
-Our <a href="milestone.html">milestone report</a> is now available.
+Our <a href="milestone.html">milestone report</a> and
+<a href="report.pdf">final report (PDF)</a> are now available.
 <p>
 All Virtual Application Profiler source code is available under the
 <a href="http://www.opensource.org/licenses/bsd-license.php">BSD License</a> at
